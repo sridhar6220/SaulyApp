@@ -1,0 +1,2160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sauly — Meeting Buddy</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><text y=%2220%22 font-size=%2220%22>%F0%9F%8E%99%EF%B8%8F</text></svg>">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+* { box-sizing: border-box; }
+
+:root {
+  color-scheme: light;
+  --font-display: "Inter Tight", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "SF Mono", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  /* brand accent — purple */
+  --brand-50:  rgb(245,240,255);
+  --brand-100: rgb(236,224,255);
+  --brand-400: rgb(202,168,255);
+  --brand-500: rgb(188,148,255);
+  --brand-600: rgb(157,110,240);
+  --brand-700: rgb(124,79,209);
+  --text-brand: rgb(124,79,209);
+  --text-on-brand: rgb(255,255,255);
+
+  --text-primary:   rgb(15,23,42);
+  --text-secondary: rgb(55,65,81);
+  --text-tertiary:  rgb(107,114,128);
+  --text-placeholder: rgb(156,163,175);
+
+  --surface:        rgb(255,255,255);
+  --surface-subtle: rgb(249,250,251);
+  --surface-muted:  rgb(247,245,251);
+
+  --border:         rgb(233,234,235);
+  --border-strong:  rgb(209,213,219);
+
+  --success:  rgb(34,197,94);
+  --success-bg: rgb(220,252,231);
+  --warning:  rgb(245,158,11);
+  --warning-bg: rgb(254,243,199);
+  --error:    rgb(239,68,68);
+  --error-bg: rgb(254,226,226);
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  --shadow-xs: 0 1px 2px rgba(10,13,18,0.05);
+  --shadow-sm: 0 1px 3px rgba(10,13,18,0.10), 0 1px 2px rgba(10,13,18,0.06);
+  --shadow-md: 0 4px 8px -2px rgba(10,13,18,0.10), 0 2px 4px -2px rgba(10,13,18,0.06);
+  --shadow-lg: 0 12px 16px -4px rgba(10,13,18,0.08), 0 4px 6px -2px rgba(10,13,18,0.03);
+  --shadow-focus: 0 0 0 4px rgba(188,148,255,0.16);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --text-primary: rgb(240,240,241);
+  --text-secondary: rgb(206,207,210);
+  --text-tertiary: rgb(148,151,156);
+  --text-placeholder: rgb(97,101,108);
+  --surface: rgb(28,31,38);
+  --surface-subtle: rgb(22,24,30);
+  --surface-muted: rgb(15,17,21);
+  --border: rgb(55,58,65);
+  --border-strong: rgb(83,88,98);
+  --brand-50: rgba(188,148,255,0.14);
+}
+
+html, body { margin: 0; padding: 0; }
+html { background: var(--surface-muted); }
+html[data-theme="dark"], html[data-theme="dark"] body { background: rgb(15,17,21); }
+
+body {
+  font-family: var(--font-body);
+  background: var(--surface-muted);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, textarea, select { font-family: inherit; color: inherit; }
+a { color: inherit; }
+::placeholder { color: var(--text-placeholder); }
+
+#app { display: flex; min-height: 100vh; background: var(--surface-muted); }
+
+/* ── Sidebar ─────────────────────────────────────────────────────── */
+.sidebar {
+  width: 236px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  transition: width 0.18s ease;
+  overflow: hidden;
+}
+.sidebar.collapsed { width: 68px; }
+.sidebar-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 22px 16px 16px; min-height: 34px;
+}
+.sidebar.collapsed .sidebar-header { justify-content: center; padding: 22px 10px 16px; }
+.sidebar-header img { height: 26px; width: auto; display: block; }
+.sidebar.collapsed .sidebar-header img { height: 28px; margin: 0 auto; }
+.sidebar-nav { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; }
+.sidebar-spacer { flex: 1; }
+.sidebar-collapse-row { padding: 8px 12px 8px; display: flex; }
+.sidebar-footer { padding: 8px 12px 16px; border-top: 1px solid var(--border); }
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; height: 40px; padding: 0 10px;
+  border: none; background: transparent; border-radius: var(--radius-md);
+  cursor: pointer; font-family: var(--font-body); font-size: 14px; font-weight: 500;
+  color: var(--text-secondary); text-align: left; white-space: nowrap;
+}
+.nav-item:hover { background: var(--surface-subtle); }
+.nav-item.active { background: var(--brand-50); color: var(--text-brand); }
+.nav-item svg { flex-shrink: 0; }
+.sidebar.collapsed .nav-item { justify-content: center; padding: 0; }
+
+/* ── Buttons ─────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 40px; padding: 0 16px; border-radius: var(--radius-md);
+  font-size: 14px; font-weight: 600; font-family: var(--font-body);
+  cursor: pointer; border: 1px solid transparent; white-space: nowrap;
+  transition: background 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn.sm { height: 36px; padding: 0 12px; font-size: 13px; }
+.btn-primary { background: var(--brand-600); color: var(--text-on-brand); }
+.btn-primary:hover:not(:disabled) { background: var(--brand-700); }
+.btn-secondary { background: var(--surface); color: var(--text-primary); border-color: var(--border-strong); }
+.btn-secondary:hover:not(:disabled) { background: var(--surface-subtle); }
+.btn-tertiary { background: transparent; color: var(--text-secondary); }
+.btn-tertiary:hover:not(:disabled) { background: var(--surface-subtle); }
+.btn-destructive.btn-secondary { color: var(--error); border-color: var(--error-bg); }
+.btn-destructive.btn-secondary:hover:not(:disabled) { background: var(--error-bg); }
+
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: var(--radius-md);
+  border: 1px solid transparent; background: transparent; cursor: pointer; color: var(--text-secondary);
+}
+.icon-btn.sm { width: 32px; height: 32px; }
+.icon-btn.secondary { border-color: var(--border-strong); background: var(--surface); }
+.icon-btn.primary { background: var(--brand-600); color: #fff; }
+.icon-btn.tertiary:hover { background: var(--surface-subtle); }
+.icon-btn:hover:not(.primary) { background: var(--surface-subtle); }
+.icon-btn:focus-visible, .btn:focus-visible, .nav-item:focus-visible, button:focus-visible, input:focus-visible, [contenteditable]:focus-visible, .settings-nav-btn:focus-visible {
+  outline: none; box-shadow: var(--shadow-focus); border-radius: var(--radius-md);
+}
+
+/* ── Topbar ──────────────────────────────────────────────────────── */
+.topbar {
+  height: 68px; background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 16px; padding: 0 28px;
+  position: sticky; top: 0; z-index: 20;
+}
+.breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-tertiary); }
+.breadcrumb a { text-decoration: none; color: var(--text-tertiary); cursor: pointer; }
+.breadcrumb a:hover { color: var(--text-primary); }
+.breadcrumb .current { color: var(--text-primary); font-weight: 500; }
+
+/* ── Page shells ─────────────────────────────────────────────────── */
+.page { padding: 28px; display: flex; flex-direction: column; gap: 24px; }
+.page-title { font-family: var(--font-display); font-weight: 600; font-size: 28px; letter-spacing: -0.02em; margin: 0 0 4px; }
+.page-sub { margin: 0; color: var(--text-tertiary); font-size: 14px; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+
+/* ── Dashboard ───────────────────────────────────────────────────── */
+.status-card {
+  padding: 20px 22px; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+}
+.live-dot { width: 10px; height: 10px; border-radius: 9999px; background: var(--error); box-shadow: 0 0 0 4px var(--error-bg); flex-shrink: 0; animation: pulse-dot 1.6s ease-in-out infinite; }
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+.featured-icon { width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--surface-subtle); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-tertiary); flex-shrink: 0; }
+
+.stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.stat-card { padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; height: 110px; justify-content: center; }
+.stat-card .row1 { display: flex; align-items: center; justify-content: space-between; }
+.stat-card .label { font-size: 13px; color: var(--text-tertiary); font-weight: 500; }
+.stat-card .value { font-family: var(--font-display); font-size: 26px; font-weight: 600; letter-spacing: -0.01em; }
+.stat-card .caption { font-size: 12px; color: var(--text-tertiary); }
+.stat-card .icon-wrap { width: 34px; height: 34px; border-radius: var(--radius-sm); background: var(--brand-50); color: var(--text-brand); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+/* ── Toolbar / filters ───────────────────────────────────────────── */
+.toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.search-input-wrap { position: relative; flex: 1 1 240px; max-width: 420px; }
+.search-input-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); pointer-events: none; }
+.search-input {
+  width: 100%; height: 40px; padding: 0 12px 0 38px; border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-primary);
+  font-size: 14px; outline: none;
+}
+.search-input:focus { border-color: var(--brand-500); box-shadow: var(--shadow-focus); }
+
+.segmented { display: inline-flex; align-items: center; background: var(--surface-subtle); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 2px; gap: 2px; }
+.segmented button {
+  border: none; background: transparent; height: 34px; padding: 0 14px; border-radius: 6px;
+  font-size: 13px; font-weight: 500; color: var(--text-secondary); cursor: pointer; font-family: var(--font-body); white-space: nowrap;
+}
+.segmented button.active { background: var(--surface); color: var(--text-primary); box-shadow: var(--shadow-xs); font-weight: 600; }
+
+.date-popover {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 40; width: 340px; max-width: calc(100vw - 24px);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 16px;
+}
+.date-popover-mask { position: fixed; inset: 0; z-index: 39; }
+.date-field { display: flex; flex-direction: column; gap: 5px; flex: 1 1 140px; min-width: 140px; }
+.date-field label { font-size: 12px; font-weight: 500; color: var(--text-tertiary); }
+.date-field input {
+  height: 40px; padding: 0 10px; border-radius: var(--radius-md); border: 1px solid var(--border-strong);
+  background: var(--surface); color: var(--text-primary); font-size: 13px; outline: none;
+}
+.date-field input:focus { border-color: var(--brand-500); box-shadow: var(--shadow-focus); }
+
+/* ── Meetings table ──────────────────────────────────────────────── */
+.mtg-table { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); overflow: hidden; }
+.mtg-head, .mtg-row-main {
+  display: grid; grid-template-columns: 2.3fr 0.95fr 0.75fr 0.85fr 1.5fr 40px; gap: 12px; align-items: center;
+}
+.mtg-head { padding: 11px 20px; background: var(--surface-subtle); border-bottom: 1px solid var(--border); }
+.mtg-head button {
+  display: flex; align-items: center; gap: 4px; background: none; border: none; padding: 0; cursor: pointer;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; color: var(--text-tertiary); font-family: var(--font-body);
+}
+.mtg-head button:hover { color: var(--text-primary); }
+.mtg-row { border-bottom: 1px solid var(--border); }
+.mtg-row:last-child { border-bottom: none; }
+.mtg-row-main { padding: 14px 20px; cursor: pointer; }
+.mtg-row-main:hover { background: var(--surface-subtle); }
+.mtg-title { font-weight: 600; font-size: 14px; color: var(--text-primary); }
+.mtg-company { font-size: 12px; color: var(--text-tertiary); }
+.mtg-cell { font-size: 13px; color: var(--text-secondary); }
+.mtg-duration { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 13px; color: var(--text-secondary); }
+.mtg-platform { display: flex; align-items: center; gap: 7px; }
+.mtg-platform img { flex-shrink: 0; display: block; }
+.mtg-interviewer { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.mtg-interviewer .name { font-size: 13px; font-weight: 600; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mtg-interviewer .email { font-size: 12px; color: var(--text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+mark { background: rgba(188,148,255,0.34); color: inherit; border-radius: 3px; padding: 0 1px; }
+
+.mtg-expanded { background: var(--surface-muted); border-top: 1px solid var(--border); padding: 22px 24px; display: flex; flex-direction: column; gap: 18px; }
+.mtg-expanded-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 28px; }
+.col-heading { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; color: var(--text-tertiary); }
+.col-heading svg { flex-shrink: 0; }
+.col-heading span.label { font-family: var(--font-display); font-weight: 600; font-size: 14px; color: var(--text-primary); }
+.highlights-list { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 9px; }
+.highlights-list.bullet { padding-left: 18px; list-style: disc; }
+.highlights-list li { font-size: 13.5px; line-height: 19px; color: var(--text-secondary); }
+
+.action-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px; border-radius: 8px; }
+.action-item:hover { background: var(--surface); }
+.action-item .txt { flex: 1; min-width: 0; cursor: pointer; font-size: 13.5px; line-height: 19px; }
+.action-item .txt.done { color: var(--text-placeholder); text-decoration: line-through; }
+.action-item .txt:not(.done) { color: var(--text-secondary); }
+.action-item-edit-row { flex: 1; display: flex; gap: 6px; }
+.text-input {
+  font-size: 13.5px; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--brand-500);
+  outline: none; font-family: var(--font-body); background: var(--surface); color: var(--text-primary);
+}
+.new-item-row { display: flex; gap: 6px; margin-top: 4px; }
+.new-item-row input {
+  flex: 1; font-size: 13.5px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-strong);
+  outline: none; font-family: var(--font-body); background: var(--surface); color: var(--text-primary);
+}
+.new-item-row input:focus, .text-input:focus { box-shadow: var(--shadow-focus); }
+
+.fmt-toolbar { display: flex; gap: 4px; margin-bottom: 6px; }
+.fmt-btn {
+  width: 28px; height: 28px; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 6px;
+  cursor: pointer; font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; justify-content: center;
+}
+.fmt-btn:hover { background: var(--surface-subtle); }
+.fmt-btn.b { font-weight: 700; }
+.fmt-btn.i { font-style: italic; }
+
+.comment-editor {
+  width: 100%; min-height: 120px; overflow-y: auto; font-size: 13.5px; line-height: 19px;
+  padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-strong); outline: none;
+  color: var(--text-secondary); background: var(--surface);
+}
+.comment-editor.modal-size { min-height: 100px; }
+.comment-editor.detail-size { min-height: 140px; }
+.comment-editor:empty:before { content: attr(data-placeholder); color: var(--text-placeholder); pointer-events: none; }
+.comment-editor ul, .comment-editor ol { margin: 4px 0; padding-left: 22px; }
+.comment-editor:focus { border-color: var(--brand-500); box-shadow: var(--shadow-focus); }
+
+.view-details-row { display: flex; justify-content: flex-end; }
+
+/* ── Modal ───────────────────────────────────────────────────────── */
+.modal-mask { position: fixed; inset: 0; background: rgba(15,17,21,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 24px; }
+.modal-box { background: var(--surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); display: flex; flex-direction: column; max-height: calc(100vh - 48px); }
+.modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 22px 24px 0; }
+.modal-head-icon { width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--brand-50); color: var(--text-brand); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 4px; }
+.modal-title { font-family: var(--font-display); font-weight: 600; font-size: 18px; margin: 0; }
+.modal-desc { font-size: 13px; color: var(--text-tertiary); margin: 3px 0 0; }
+.modal-close { flex-shrink: 0; }
+.modal-body { padding: 18px 24px 24px; overflow-y: auto; }
+
+/* ── Tabs ────────────────────────────────────────────────────────── */
+.tabs { display: flex; align-items: center; gap: 4px; border-bottom: 1px solid var(--border); }
+.tabs button {
+  border: none; background: transparent; padding: 9px 4px; margin-right: 20px; font-size: 14px; font-weight: 500;
+  color: var(--text-tertiary); cursor: pointer; font-family: var(--font-body); position: relative; top: 1px;
+  border-bottom: 2px solid transparent;
+}
+.tabs button.active { color: var(--text-brand); border-bottom-color: var(--brand-600); font-weight: 600; }
+
+/* ── Checkbox / Toggle ───────────────────────────────────────────── */
+.checkbox-wrap { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.checkbox {
+  width: 20px; height: 20px; border-radius: 5px; border: 1.5px solid var(--border-strong); background: var(--surface);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer;
+}
+.checkbox.checked { background: var(--brand-600); border-color: var(--brand-600); color: #fff; }
+.checkbox-label { font-size: 14px; color: var(--text-primary); }
+
+.toggle { width: 44px; height: 24px; border-radius: 999px; background: var(--border-strong); position: relative; cursor: pointer; border: none; flex-shrink: 0; transition: background 0.15s ease; }
+.toggle.checked { background: var(--brand-600); }
+.toggle .knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 999px; background: #fff; transition: left 0.15s ease; box-shadow: var(--shadow-xs); }
+.toggle.checked .knob { left: 23px; }
+
+/* ── Select ──────────────────────────────────────────────────────── */
+.select-wrap { position: relative; }
+.select-btn {
+  width: 100%; min-width: 220px; height: 48px; padding: 0 14px; border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-primary);
+  font-size: 13.5px; text-align: left; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.select-btn:hover { border-color: var(--text-tertiary); }
+.select-menu {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 50; max-height: 260px; overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); padding: 4px;
+}
+.select-menu button {
+  width: 100%; text-align: left; border: none; background: transparent; padding: 9px 10px; border-radius: 6px;
+  font-size: 13.5px; color: var(--text-primary); cursor: pointer; font-family: var(--font-body);
+}
+.select-menu button:hover { background: var(--surface-subtle); }
+.select-menu button.active { color: var(--text-brand); font-weight: 600; background: var(--brand-50); }
+
+/* ── Badge ───────────────────────────────────────────────────────── */
+.badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11.5px; font-weight: 600; }
+.badge.violet { background: var(--brand-100); color: var(--text-brand); }
+
+/* ── Empty state ─────────────────────────────────────────────────── */
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 48px 24px; gap: 12px; color: var(--text-tertiary); min-height: 220px; }
+.empty-state .icon-wrap { width: 48px; height: 48px; border-radius: 999px; background: var(--surface-subtle); display: flex; align-items: center; justify-content: center; color: var(--text-tertiary); }
+.empty-state .title { font-weight: 600; font-size: 15px; color: var(--text-primary); }
+.empty-state .desc { font-size: 13px; max-width: 320px; }
+
+/* ── File upload ─────────────────────────────────────────────────── */
+.dropzone {
+  border: 1.5px dashed var(--border-strong); border-radius: var(--radius-lg); min-height: 120px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center;
+  padding: 16px; cursor: pointer; color: var(--text-tertiary); background: var(--surface-subtle);
+}
+.dropzone:hover, .dropzone.drag { border-color: var(--brand-500); background: var(--brand-50); }
+.dropzone .main { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+.dropzone .hint { font-size: 12px; }
+.dropzone-file { display: flex; align-items: center; gap: 10px; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 12px 14px; background: var(--surface-subtle); }
+.dropzone-file .name { font-size: 13.5px; font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.form-field { display: flex; flex-direction: column; gap: 6px; }
+.form-field label { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+.form-field input[type="text"] {
+  width: 100%; font-size: 14px; padding: 11px 13px; border-radius: 8px; border: 1px solid var(--border-strong);
+  outline: none; color: var(--text-primary); background: var(--surface);
+}
+.form-field input:focus { border-color: var(--brand-500); box-shadow: var(--shadow-focus); }
+
+/* ── Detail (old) page ───────────────────────────────────────────── */
+.detail-grid { display: grid; grid-template-columns: 1.7fr 1fr; gap: 24px; align-items: flex-start; }
+.detail-panel { padding: 22px; }
+
+/* ── Settings ────────────────────────────────────────────────────── */
+.settings-grid { display: grid; grid-template-columns: 200px 1fr; gap: 28px; align-items: start; }
+.settings-nav { display: flex; flex-direction: column; gap: 2px; position: sticky; top: 88px; }
+.settings-nav-btn {
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px; border: none; border-radius: 8px;
+  cursor: pointer; font-family: var(--font-body); font-size: 14px; font-weight: 500; text-align: left;
+  background: transparent; color: var(--text-secondary);
+}
+.settings-nav-btn.active { background: var(--brand-50); color: var(--text-brand); }
+.settings-nav-btn:hover:not(.active) { background: var(--surface-subtle); }
+.settings-section { display: flex; flex-direction: column; gap: 20px; }
+.settings-card { padding: 22px; }
+.settings-card-title { font-family: var(--font-display); font-weight: 600; font-size: 16px; }
+.settings-card-desc { margin: 4px 0 0; font-size: 13px; color: var(--text-tertiary); }
+.settings-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; border-top: 1px solid var(--border); }
+.settings-row:first-of-type { border-top: none; }
+.settings-row .row-title { font-weight: 600; font-size: 14px; }
+.settings-row .row-desc { font-size: 12.5px; color: var(--text-tertiary); margin-top: 2px; }
+.settings-conn-row { display: flex; align-items: center; gap: 14px; padding: 16px 0; border-top: 1px solid var(--border); }
+.settings-conn-row:first-of-type { border-top: none; }
+.conn-icon { width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-subtle); }
+.lang-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border); }
+.lang-row:first-of-type { border-top: none; }
+.pin-btn { display: flex; align-items: center; gap: 6px; border: 1px solid var(--border-strong); background: transparent; border-radius: 999px; padding: 5px 12px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: var(--font-body); color: var(--text-tertiary); }
+.pin-btn.default { background: var(--brand-500); color: #fff; border-color: var(--brand-500); }
+.checkbox-group { display: flex; flex-direction: column; gap: 12px; }
+.storage-row { display: flex; gap: 8px; align-items: center; }
+.storage-row input {
+  flex: 1; font-family: var(--font-mono); font-size: 12.5px; padding: 10px 12px; border-radius: 8px;
+  border: 1px solid var(--border-strong); outline: none; color: var(--text-secondary); background: var(--surface-subtle);
+}
+
+/* ── Pagination ──────────────────────────────────────────────────── */
+.pagination { display: flex; align-items: center; gap: 6px; }
+.pagination button { height: 32px; min-width: 32px; padding: 0 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); font-size: 13px; cursor: pointer; }
+.pagination button.active { background: var(--brand-600); color: #fff; border-color: var(--brand-600); }
+
+@media (max-width: 1100px) {
+  .stat-grid { grid-template-columns: 1fr; }
+  .mtg-expanded-cols { grid-template-columns: 1fr; }
+  .detail-grid { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* ===== dom.js ===== */
+// Tiny DOM-morphing renderer: given a container and a fresh HTML string,
+// patches the existing DOM in place instead of clobbering it. This is what
+// keeps text-input cursors, contenteditable selections and scroll position
+// stable across re-renders without a full framework.
+(function (global) {
+  "use strict";
+
+  function keyOf(node) {
+    return node.nodeType === Node.ELEMENT_NODE ? node.getAttribute("data-key") : null;
+  }
+
+  function syncAttrs(oldEl, newEl) {
+    const oldAttrs = oldEl.attributes;
+    for (let i = oldAttrs.length - 1; i >= 0; i--) {
+      const name = oldAttrs[i].name;
+      if (!newEl.hasAttribute(name)) oldEl.removeAttribute(name);
+    }
+    const newAttrs = newEl.attributes;
+    for (let i = 0; i < newAttrs.length; i++) {
+      const name = newAttrs[i].name;
+      const val = newAttrs[i].value;
+      if (oldEl.getAttribute(name) !== val) oldEl.setAttribute(name, val);
+    }
+  }
+
+  function morphNode(oldNode, newNode) {
+    if (oldNode.nodeType !== newNode.nodeType || oldNode.nodeName !== newNode.nodeName) {
+      oldNode.replaceWith(newNode);
+      return newNode;
+    }
+    if (oldNode.nodeType === Node.TEXT_NODE || oldNode.nodeType === Node.COMMENT_NODE) {
+      if (oldNode.nodeValue !== newNode.nodeValue) oldNode.nodeValue = newNode.nodeValue;
+      return oldNode;
+    }
+    if (oldNode.nodeType !== Node.ELEMENT_NODE) return oldNode;
+
+    syncAttrs(oldNode, newNode);
+
+    const tag = oldNode.tagName;
+    const isFocused = document.activeElement === oldNode;
+
+    if (tag === "INPUT" || tag === "TEXTAREA") {
+      if (!isFocused && oldNode.value !== newNode.value) oldNode.value = newNode.value;
+      if (oldNode.checked !== newNode.checked) oldNode.checked = newNode.checked;
+      return oldNode;
+    }
+
+    if (oldNode.hasAttribute("contenteditable")) {
+      // Content is owned by the app after first hydration (see hydrateEditors);
+      // never overwrite it here or we'd blow away the caret/selection.
+      return oldNode;
+    }
+
+    morphChildren(oldNode, newNode);
+    return oldNode;
+  }
+
+  function morphChildren(oldParent, newParent) {
+    const oldChildrenAll = Array.from(oldParent.childNodes);
+    const newChildren = Array.from(newParent.childNodes);
+    const usedOld = new Set();
+    const oldKeyed = new Map();
+    oldChildrenAll.forEach((c) => {
+      const k = keyOf(c);
+      if (k != null) oldKeyed.set(k, c);
+    });
+
+    let searchStart = 0;
+    let refNode = oldParent.firstChild;
+
+    newChildren.forEach((newChild) => {
+      const k = keyOf(newChild);
+      let matched = null;
+
+      if (k != null && oldKeyed.has(k) && !usedOld.has(oldKeyed.get(k))) {
+        matched = oldKeyed.get(k);
+      } else if (k == null) {
+        for (let i = searchStart; i < oldChildrenAll.length; i++) {
+          const cand = oldChildrenAll[i];
+          if (usedOld.has(cand)) continue;
+          if (keyOf(cand) != null) continue;
+          if (cand.nodeType === newChild.nodeType && cand.nodeName === newChild.nodeName) {
+            matched = cand;
+            break;
+          }
+        }
+      }
+
+      if (matched) {
+        usedOld.add(matched);
+        const result = morphNode(matched, newChild);
+        if (result !== refNode) {
+          oldParent.insertBefore(result, refNode);
+        } else {
+          refNode = refNode.nextSibling;
+        }
+      } else {
+        oldParent.insertBefore(newChild, refNode);
+      }
+    });
+
+    oldChildrenAll.forEach((c) => {
+      if (!usedOld.has(c) && c.parentNode === oldParent) {
+        oldParent.removeChild(c);
+      }
+    });
+  }
+
+  function morph(container, html) {
+    const tmp = document.createElement(container.tagName === "TBODY" ? "tbody" : "div");
+    tmp.innerHTML = html;
+    morphChildren(container, tmp);
+  }
+
+  global.DomMorph = { morph };
+})(window);
+
+
+/* ===== icons.js ===== */
+// Inline stroke-icon set (24x24 viewBox, stroke=currentColor) matching the
+// design's icon language. ICON(name, size) returns raw SVG markup.
+(function (global) {
+  "use strict";
+
+  const PATHS = {
+    home: '<path d="M4 10.5L12 4l8 6.5"></path><path d="M6 9.5V19a1 1 0 0 0 1 1h3v-5a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v5h3a1 1 0 0 0 1-1V9.5"></path>',
+    briefcase: '<rect x="3.5" y="7.5" width="17" height="11.5" rx="2"></rect><path d="M8.5 7.5V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5"></path><path d="M3.5 12.5h17"></path>',
+    gear: '<circle cx="12" cy="12" r="3"></circle><path d="M12 3.5v2M12 18.5v2M20.5 12h-2M5.5 12h-2M17.7 6.3l-1.4 1.4M7.7 16.3l-1.4 1.4M17.7 17.7l-1.4-1.4M7.7 7.7L6.3 6.3"></path>',
+    gearHex: '<path d="M12 3.2l7.6 4.4v8.8L12 20.8 4.4 16.4V7.6L12 3.2z"></path><circle cx="12" cy="12" r="3.3"></circle>',
+    plug: '<path d="M9 2v4M15 2v4"></path><path d="M7 6h10v4a5 5 0 0 1-10 0V6z"></path><path d="M12 15v3a3 3 0 0 0 3 3h1"></path>',
+    flask: '<path d="M9 3h6"></path><path d="M10 3v6L5 19a1.5 1.5 0 0 0 1.3 2.2h11.4A1.5 1.5 0 0 0 19 19l-5-10V3"></path><path d="M7.5 14h9"></path>',
+    chevronDown: '<path d="M6 9l6 6 6-6"></path>',
+    chevronUp: '<path d="M6 15l6-6 6 6"></path>',
+    chevronLeft: '<path d="M15 6l-6 6 6 6"></path>',
+    chevronRight: '<path d="M9 6l6 6-6 6"></path>',
+    calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"></rect><path d="M8 3v4M16 3v4M3.5 10h17"></path>',
+    plus: '<path d="M12 5v14M5 12h14"></path>',
+    check: '<path d="M5 12.5l4.5 4.5L19 7"></path>',
+    close: '<path d="M6 6l12 12M18 6L6 18"></path>',
+    copy: '<rect x="8.5" y="8.5" width="11" height="11" rx="2"></rect><path d="M15 8.5V6.5a2 2 0 0 0-2-2H6.5a2 2 0 0 0-2 2V13a2 2 0 0 0 2 2H8.5"></path>',
+    import: '<path d="M12 3.5v11"></path><path d="M7.5 10.5L12 15l4.5-4.5"></path><path d="M4.5 16.5V18a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-1.5"></path>',
+    bookmark: '<path d="M6.5 4h11a1 1 0 0 1 1 1v15l-6.5-4-6.5 4V5a1 1 0 0 1 1-1z"></path>',
+    clipboard: '<rect x="5.5" y="5" width="13" height="16" rx="2"></rect><path d="M9 5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5v1H9V5z"></path><path d="M8.5 11.5h7M8.5 15.5h7"></path>',
+    edit: '<path d="M14.5 4.5l5 5L8 21H3v-5L14.5 4.5z"></path><path d="M12.5 6.5l5 5"></path>',
+    mic: '<rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5.5 11a6.5 6.5 0 0 0 13 0"></path><path d="M12 17.5V21M9 21h6"></path>',
+    document: '<path d="M7 3.5h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-16a1 1 0 0 1 1-1z"></path><path d="M14 3.5v4h4"></path><path d="M9 13h6M9 16.5h6"></path>',
+    note: '<path d="M6 3.5h9.5L19 7v13.5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z"></path><path d="M8.5 9.5h7M8.5 13h7M8.5 16.5h4.5"></path>',
+    chartSquare: '<rect x="3.5" y="3.5" width="17" height="17" rx="3"></rect><path d="M8 15.5v-3M12 15.5v-6M16 15.5v-4.5"></path>',
+    sun: '<circle cx="12" cy="12" r="4.5"></circle><path d="M12 2.5v2.5M12 19v2.5M4.7 4.7l1.8 1.8M17.5 17.5l1.8 1.8M2.5 12H5M19 12h2.5M4.7 19.3l1.8-1.8M17.5 6.5l1.8-1.8"></path>',
+    moon: '<path d="M20 14.5A8.5 8.5 0 019.5 4a8.5 8.5 0 1010.5 10.5z"></path>',
+    fourArrows: '<path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"></path>',
+    search: '<circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M20 20l-4.35-4.35"></path>',
+    trash: '<path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M7 7l1 13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-13"></path>',
+    add: '<path d="M12 5v14M5 12h14"></path>',
+  };
+
+  function ICON(name, size) {
+    size = size || 18;
+    const inner = PATHS[name] || "";
+    return (
+      '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" ' +
+      'stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;display:block;">' +
+      inner +
+      "</svg>"
+    );
+  }
+
+  global.ICON = ICON;
+})(window);
+
+
+/* ===== components.js ===== */
+// Generic, presentation-only UI atoms. Every function returns an HTML
+// string. Interactivity is wired via data-click/data-input/data-change/
+// data-keydown/data-mousedown="actionName|arg1|arg2" attributes, dispatched
+// by the single delegated listener set up in app.js — components never
+// touch the store directly.
+(function (global) {
+  "use strict";
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function attr(name, value) {
+    return value == null ? "" : ' ' + name + '="' + esc(value) + '"';
+  }
+
+  function act(type, id, args) {
+    if (!id) return "";
+    const parts = [id].concat(args || []);
+    return " data-" + type + '="' + esc(parts.join("|")) + '"';
+  }
+
+  function Button(o) {
+    o = o || {};
+    const hierarchy = o.hierarchy || "secondary";
+    const cls = ["btn", "btn-" + hierarchy, o.size === "sm" ? "sm" : "", o.destructive ? "btn-destructive" : ""]
+      .filter(Boolean)
+      .join(" ");
+    return (
+      '<button type="button" class="' + cls + '"' +
+      (o.disabled ? " disabled" : "") +
+      act("click", o.click, o.args) +
+      attr("aria-label", o.ariaLabel) +
+      (o.style ? attr("style", o.style) : "") +
+      ">" +
+      (o.iconLeft ? ICON(o.iconLeft, 18) : "") +
+      (o.label != null ? "<span>" + o.label + "</span>" : "") +
+      "</button>"
+    );
+  }
+
+  function IconButton(o) {
+    o = o || {};
+    const cls = ["icon-btn", o.hierarchy || "tertiary", o.size === "sm" ? "sm" : ""].filter(Boolean).join(" ");
+    return (
+      '<button type="button" class="' + cls + '"' +
+      act("click", o.click, o.args) +
+      act("mousedown", o.mousedown, o.mousedownArgs) +
+      attr("aria-label", o.ariaLabel) +
+      (o.disabled ? " disabled" : "") +
+      ">" +
+      (o.iconName ? ICON(o.iconName, o.iconSize || 16) : o.iconHtml || "") +
+      "</button>"
+    );
+  }
+
+  function NavItem(o) {
+    o = o || {};
+    return (
+      '<button type="button" class="nav-item' + (o.active ? " active" : "") + '"' +
+      act("click", o.click, o.args) +
+      attr("aria-label", o.collapsed ? o.label : null) +
+      attr("title", o.collapsed ? o.label : null) +
+      ">" +
+      (o.iconHtml || ICON(o.icon, 18)) +
+      (o.collapsed ? "" : "<span>" + esc(o.label) + "</span>") +
+      "</button>"
+    );
+  }
+
+  function Checkbox(o) {
+    o = o || {};
+    return (
+      '<label class="checkbox-wrap">' +
+      '<span class="checkbox' + (o.checked ? " checked" : "") + '" role="checkbox" tabindex="0" aria-checked="' + (o.checked ? "true" : "false") + '"' +
+      act("click", o.click, o.args) +
+      act("keydown", "checkboxKey", o.args ? [o.click].concat(o.args) : [o.click]) +
+      ">" + (o.checked ? ICON("check", 13) : "") + "</span>" +
+      (o.label ? '<span class="checkbox-label">' + esc(o.label) + "</span>" : "") +
+      "</label>"
+    );
+  }
+
+  function Toggle(o) {
+    o = o || {};
+    return (
+      '<button type="button" role="switch" aria-checked="' + (o.checked ? "true" : "false") + '" class="toggle' +
+      (o.checked ? " checked" : "") + '"' +
+      act("click", o.click, o.args) +
+      attr("aria-label", o.ariaLabel) +
+      '><span class="knob"></span></button>'
+    );
+  }
+
+  function Select(o) {
+    o = o || {};
+    const current = (o.options || []).find((x) => x.value === o.value);
+    const open = o.open;
+    return (
+      '<div class="select-wrap" data-select-key="' + esc(o.fieldKey) + '"' + (o.style ? attr("style", o.style) : "") + '>' +
+      '<button type="button" class="select-btn"' + act("click", "toggleSelect", [o.fieldKey]) + ' aria-haspopup="listbox" aria-expanded="' + (open ? "true" : "false") + '">' +
+      "<span>" + esc(current ? current.label : "") + "</span>" +
+      ICON("chevronDown", 16) +
+      "</button>" +
+      (open
+        ? '<div class="date-popover-mask" data-click="closeSelect"></div><div class="select-menu" role="listbox">' +
+          (o.options || [])
+            .map(
+              (opt) =>
+                '<button type="button" role="option" class="' +
+                (opt.value === o.value ? "active" : "") +
+                '"' +
+                act("click", o.onChange, [o.fieldKey, opt.value]) +
+                ">" +
+                esc(opt.label) +
+                "</button>"
+            )
+            .join("") +
+          "</div>"
+        : "") +
+      "</div>"
+    );
+  }
+
+  function SegmentedControl(o) {
+    o = o || {};
+    return (
+      '<div class="segmented">' +
+      (o.options || [])
+        .map(
+          (opt) =>
+            '<button type="button" class="' +
+            (opt.value === o.value ? "active" : "") +
+            '"' +
+            act("click", o.onChange, [opt.value]) +
+            ">" +
+            esc(opt.label) +
+            "</button>"
+        )
+        .join("") +
+      "</div>"
+    );
+  }
+
+  function Tabs(o) {
+    o = o || {};
+    return (
+      '<div class="tabs" role="tablist">' +
+      (o.tabs || [])
+        .map(
+          (t) =>
+            '<button type="button" role="tab" aria-selected="' + (t.value === o.value ? "true" : "false") + '" class="' +
+            (t.value === o.value ? "active" : "") +
+            '"' +
+            act("click", o.onChange, [t.value]) +
+            ">" +
+            esc(t.label) +
+            "</button>"
+        )
+        .join("") +
+      "</div>"
+    );
+  }
+
+  function Badge(o) {
+    o = o || {};
+    return '<span class="badge ' + (o.color || "") + '">' + esc(o.label) + "</span>";
+  }
+
+  function FeaturedIcon(o) {
+    o = o || {};
+    return '<span class="featured-icon">' + ICON(o.icon, 20) + "</span>";
+  }
+
+  function EmptyState(o) {
+    o = o || {};
+    return (
+      '<div class="empty-state">' +
+      '<span class="icon-wrap">' + ICON(o.icon, 22) + "</span>" +
+      '<div class="title">' + esc(o.title) + "</div>" +
+      '<div class="desc">' + esc(o.description) + "</div>" +
+      "</div>"
+    );
+  }
+
+  function Pagination() {
+    return (
+      '<div class="pagination">' +
+      '<button type="button" disabled>' + ICON("chevronLeft", 14) + "</button>" +
+      '<button type="button" class="active">1</button>' +
+      '<button type="button" disabled>' + ICON("chevronRight", 14) + "</button>" +
+      "</div>"
+    );
+  }
+
+  function Breadcrumb(items) {
+    return (
+      '<div class="breadcrumb">' +
+      (items || [])
+        .map((it, i) => {
+          const isLast = i === (items.length - 1);
+          if (isLast) return '<span class="current">' + esc(it.label) + "</span>";
+          return '<a' + act("click", it.click, it.args) + '>' + esc(it.label) + "</a><span>/</span>";
+        })
+        .join("") +
+      "</div>"
+    );
+  }
+
+  function Modal(o) {
+    o = o || {};
+    if (!o.open) return "";
+    const w = o.width ? o.width + "px" : "560px";
+    return (
+      '<div class="modal-mask"' + act("click", "modalMaskClick", [o.id || ""]) + '>' +
+      '<div class="modal-box" style="width:' + w + ';" role="dialog" aria-modal="true"' + act("click", "stop", []) + attr("aria-label", o.title) + '>' +
+      '<div class="modal-head">' +
+      '<div style="display:flex;align-items:flex-start;gap:2px;min-width:0;">' +
+      (o.icon ? '<span class="modal-head-icon">' + ICON(o.icon, 20) + "</span>" : "") +
+      '<div style="min-width:0;">' +
+      '<h2 class="modal-title">' + esc(o.title) + "</h2>" +
+      (o.description ? '<p class="modal-desc">' + esc(o.description) + "</p>" : "") +
+      "</div></div>" +
+      '<div class="modal-close">' + IconButton({ iconName: "close", ariaLabel: "Close", hierarchy: "tertiary", size: "sm", click: "closeModal", args: [o.id || ""] }) + "</div>" +
+      "</div>" +
+      '<div class="modal-body"' + (o.bodyHeight ? attr("style", "height:" + o.bodyHeight + "px;") : "") + ">" +
+      (o.bodyHtml || "") +
+      "</div>" +
+      "</div>" +
+      "</div>"
+    );
+  }
+
+  function Dropzone(o) {
+    o = o || {};
+    if (o.fileName) {
+      return (
+        '<div class="dropzone-file">' +
+        ICON("document", 22) +
+        '<span class="name">' + esc(o.fileName) + "</span>" +
+        IconButton({ iconName: "close", ariaLabel: "Remove file", hierarchy: "tertiary", size: "sm", click: "clearUploadFile" }) +
+        "</div>"
+      );
+    }
+    return (
+      '<label class="dropzone"' + act("click", "noop", []) + '>' +
+      '<input type="file" accept="audio/*" style="display:none;" data-change="uploadFilePicked" />' +
+      ICON("import", 26) +
+      '<div class="main">Click to upload</div>' +
+      '<div class="hint">or drag and drop</div>' +
+      '<div class="hint">MP3, WAV, M4A, FLAC up to 500MB</div>' +
+      "</label>"
+    );
+  }
+
+  global.UI = {
+    esc, attr, act,
+    Button, IconButton, NavItem, Checkbox, Toggle, Select, SegmentedControl,
+    Tabs, Badge, FeaturedIcon, EmptyState, Pagination, Breadcrumb, Modal, Dropzone,
+  };
+})(window);
+
+
+/* ===== data.js ===== */
+// Seed data + option lists, ported from the design prototype's mock dataset.
+(function (global) {
+  "use strict";
+
+  function fmtDuration(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return "00:" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+  }
+  function fmtShortDate(d) {
+    if (!d) return "Any";
+    const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return MON[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear();
+  }
+  function durationToSeconds(str) {
+    const p = str.split(":").map(Number);
+    return p[0] * 3600 + p[1] * 60 + p[2];
+  }
+
+  const PLATFORM_META = {
+    zoom: { label: "Zoom", icon: "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIj8+Cgo8c3ZnIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDMyIDMyIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMiAxMS42QzIgOC4yMzk2OSAyIDYuNTU5NTMgMi42NTM5NiA1LjI3NjA2QzMuMjI5MiA0LjE0NzA4IDQuMTQ3MDggMy4yMjkyIDUuMjc2MDYgMi42NTM5NkM2LjU1OTUzIDIgOC4yMzk2OSAyIDExLjYgMkgyMC40QzIzLjc2MDMgMiAyNS40NDA1IDIgMjYuNzIzOSAyLjY1Mzk2QzI3Ljg1MjkgMy4yMjkyIDI4Ljc3MDggNC4xNDcwOCAyOS4zNDYgNS4yNzYwNkMzMCA2LjU1OTUzIDMwIDguMjM5NjkgMzAgMTEuNlYyMC40QzMwIDIzLjc2MDMgMzAgMjUuNDQwNSAyOS4zNDYgMjYuNzIzOUMyOC43NzA4IDI3Ljg1MjkgMjcuODUyOSAyOC43NzA4IDI2LjcyMzkgMjkuMzQ2QzI1LjQ0MDUgMzAgMjMuNzYwMyAzMCAyMC40IDMwSDExLjZDOC4yMzk2OSAzMCA2LjU1OTUzIDMwIDUuMjc2MDYgMjkuMzQ2QzQuMTQ3MDggMjguNzcwOCAzLjIyOTIgMjcuODUyOSAyLjY1Mzk2IDI2LjcyMzlDMiAyNS40NDA1IDIgMjMuNzYwMyAyIDIwLjRWMTEuNloiIGZpbGw9IiM0MDg3RkMiPjwvcGF0aD4KPHBhdGggZD0iTTguMjY2NjcgMTBDNy41NjcxMSAxMCA3IDEwLjYzOTYgNyAxMS40Mjg2VjE4LjM1NzFDNyAyMC4zNjkgOC40NDYxMiAyMiAxMC4yMyAyMkwxNy43MzMzIDIxLjkyODZDMTguNDMyOSAyMS45Mjg2IDE5IDIxLjI4OSAxOSAyMC41VjEzLjVDMTkgMTEuNDg4MSAxNy4yODM5IDEwIDE1LjUgMTBMOC4yNjY2NyAxMFoiIGZpbGw9IndoaXRlIj48L3BhdGg+CjxwYXRoIGQ9Ik0yMC43MTIyIDEyLjcyNzZDMjAuMjU5NiAxMy4xNzUyIDIwIDEzLjgyMTEgMjAgMTQuNVYxNy4zOTkzQzIwIDE4LjA3ODIgMjAuMjU5NiAxOC43MjQyIDIwLjcxMjIgMTkuMTcxN0wyMy41Mjg4IDIxLjY1MjVDMjQuMTAxOSAyMi4yMTkxIDI1IDIxLjc2MDEgMjUgMjAuOTAwNVYxMS4xMzUyQzI1IDEwLjI3NTUgMjQuMTAxOSA5LjgxNjU0IDIzLjUyODggMTAuMzgzMkwyMC43MTIyIDEyLjcyNzZaIiBmaWxsPSJ3aGl0ZSI+PC9wYXRoPgo8L3N2Zz4=" },
+    teams: { label: "Teams", icon: "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIj8+Cgo8c3ZnIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDMyIDMyIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMTkgMTMuOTAzMkMxOSAxMy40MDQ0IDE5LjQwNDQgMTMgMTkuOTAzMiAxM0gzMS4wOTY4QzMxLjU5NTYgMTMgMzIgMTMuNDA0NCAzMiAxMy45MDMyVjIwLjVDMzIgMjQuMDg5OSAyOS4wODk5IDI3IDI1LjUgMjdDMjEuOTEwMSAyNyAxOSAyNC4wODk5IDE5IDIwLjVWMTMuOTAzMloiIGZpbGw9InVybCgjcGFpbnQwX2xpbmVhcl84N183Nzc3KSI+PC9wYXRoPgo8cGF0aCBkPSJNOSAxMi4yMjU4QzkgMTEuNTQ4OCA5LjU0ODgxIDExIDEwLjIyNTggMTFIMjMuNzc0MkMyNC40NTEyIDExIDI1IDExLjU0ODggMjUgMTIuMjI1OFYyMkMyNSAyNi40MTgzIDIxLjQxODMgMzAgMTcgMzBDMTIuNTgxNyAzMCA5IDI2LjQxODMgOSAyMlYxMi4yMjU4WiIgZmlsbD0idXJsKCNwYWludDFfbGluZWFyXzg3Xzc3NzcpIj48L3BhdGg+CjxjaXJjbGUgY3g9IjI3IiBjeT0iOCIgcj0iMyIgZmlsbD0iIzM0NDM5RSI+PC9jaXJjbGU+CjxjaXJjbGUgY3g9IjI3IiBjeT0iOCIgcj0iMyIgZmlsbD0idXJsKCNwYWludDJfbGluZWFyXzg3Xzc3NzcpIj48L2NpcmNsZT4KPGNpcmNsZSBjeD0iMTgiIGN5PSI2IiByPSI0IiBmaWxsPSJ1cmwoI3BhaW50M19saW5lYXJfODdfNzc3NykiPjwvY2lyY2xlPgo8bWFzayBpZD0ibWFzazBfODdfNzc3NyIgc3R5bGU9Im1hc2stdHlwZTphbHBoYSIgbWFza1VuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeD0iOSIgeT0iMCIgd2lkdGg9IjE2IiBoZWlnaHQ9IjMwIj4KPHBhdGggZD0iTTE3IDEwQzE5Ljc2MTUgMTAgMjIgNy43NjE0NyAyMiA1QzIyIDIuMjM4NTMgMTkuNzYxNSAwIDE3IDBDMTQuMjM4NSAwIDEyIDIuMjM4NTMgMTIgNUMxMiA3Ljc2MTQ3IDE0LjIzODUgMTAgMTcgMTBaIiBmaWxsPSJ1cmwoI3BhaW50NF9saW5lYXJfODdfNzc3NykiPjwvcGF0aD4KPHBhdGggZD0iTTEwLjIyNTggMTFDOS41NDg4MyAxMSA5IDExLjU0ODggOSAxMi4yMjU4VjIyQzkgMjYuNDE4MyAxMi41ODE3IDMwIDE3IDMwQzIxLjQxODMgMzAgMjUgMjYuNDE4MyAyNSAyMlYxMi4yMjU4QzI1IDExLjU0ODggMjQuNDUxMiAxMSAyMy43NzQyIDExSDEwLjIyNThaIiBmaWxsPSJ1cmwoI3BhaW50NV9saW5lYXJfODdfNzc3NykiPjwvcGF0aD4KPC9tYXNrPgo8ZyBtYXNrPSJ1cmwoI21hc2swXzg3Xzc3NzcpIj4KPHBhdGggZD0iTTcgMTJDNyAxMC4zNDMxIDguMzQzMTUgOSAxMCA5SDE3QzE4LjY1NjkgOSAyMCAxMC4zNDMxIDIwIDEyVjI0QzIwIDI1LjY1NjkgMTguNjU2OSAyNyAxNyAyN0g3VjEyWiIgZmlsbD0iIzAwMDAwMCIgZmlsbC1vcGFjaXR5PSIwLjMiPjwvcGF0aD4KPC9nPgo8cmVjdCB5PSI3IiB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHJ4PSIyIiBmaWxsPSJ1cmwoI3BhaW50Nl9saW5lYXJfODdfNzc3NykiPjwvcmVjdD4KPHBhdGggZD0iTTEzIDExSDVWMTIuODM0N0g3Ljk5NDk0VjIxSDEwLjAwNTFWMTIuODM0N0gxM1YxMVoiIGZpbGw9IndoaXRlIj48L3BhdGg+CjxkZWZzPgo8bGluZWFyR3JhZGllbnQgaWQ9InBhaW50MF9saW5lYXJfODdfNzc3NyIgeDE9IjE5IiB5MT0iMTMuNzM2OCIgeDI9IjMyLjE1OTEiIHkyPSIyMi4zMzU1IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiMzNjQwODgiPjwvc3RvcD4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjNkU3RUUxIj48L3N0b3A+CjwvbGluZWFyR3JhZGllbnQ+CjxsaW5lYXJHcmFkaWVudCBpZD0icGFpbnQxX2xpbmVhcl84N183Nzc3IiB4MT0iOSIgeTE9IjE5LjQwMzgiIHgyPSIyNSIgeTI9IjE5LjQwMzgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KPHN0b3Agc3RvcC1jb2xvcj0iIzUxNUZDNCI+PC9zdG9wPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM3MDg0RUEiPjwvc3RvcD4KPC9saW5lYXJHcmFkaWVudD4KPGxpbmVhckdyYWRpZW50IGlkPSJwYWludDJfbGluZWFyXzg3Xzc3NzciIHgxPSIyNCIgeTE9IjUuMzE1NzkiIHgyPSIyOS43OTYzIiB5Mj0iOS4zOTQ2OSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjMzY0MDg4Ij48L3N0b3A+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzZFN0VFMSI+PC9zdG9wPgo8L2xpbmVhckdyYWRpZW50Pgo8bGluZWFyR3JhZGllbnQgaWQ9InBhaW50M19saW5lYXJfODdfNzc3NyIgeDE9IjE1LjE0MjkiIHkxPSIzLjE0Mjg2IiB4Mj0iMjAuMjg1NyIgeTI9IjkuMTQyODYiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KPHN0b3Agc3RvcC1jb2xvcj0iIzQ4NThBRSI+PC9zdG9wPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM0RTYwQ0UiPjwvc3RvcD4KPC9saW5lYXJHcmFkaWVudD4KPGxpbmVhckdyYWRpZW50IGlkPSJwYWludDRfbGluZWFyXzg3Xzc3NzciIHgxPSIxMy40Mjg2IiB5MT0iMS40Mjg1NyIgeDI9IjE5Ljg1NzEiIHkyPSI4LjkyODU3IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiM0ODU4QUUiPjwvc3RvcD4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjNEU2MENFIj48L3N0b3A+CjwvbGluZWFyR3JhZGllbnQ+CjxsaW5lYXJHcmFkaWVudCBpZD0icGFpbnQ1X2xpbmVhcl84N183Nzc3IiB4MT0iMTMuNDI4NiIgeTE9IjEuNDI4NTciIHgyPSIxOS44NTcxIiB5Mj0iOC45Mjg1NyIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjNDg1OEFFIj48L3N0b3A+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzRFNjBDRSI+PC9zdG9wPgo8L2xpbmVhckdyYWRpZW50Pgo8bGluZWFyR3JhZGllbnQgaWQ9InBhaW50Nl9saW5lYXJfODdfNzc3NyIgeDE9Ii01LjIxNTM5ZS0wOCIgeTE9IjE2IiB4Mj0iMTgiIHkyPSIxNiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjMkEzODg3Ij48L3N0b3A+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzRDNTZCOSI+PC9zdG9wPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPg==" },
+    meet: { label: "Google Meet", icon: "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIj8+Cgo8c3ZnIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDMyIDMyIiBkYXRhLW5hbWU9IkxheWVyIDEiIGlkPSJMYXllcl8xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Ik0yNCwyMS40NVYyNWEyLjAwNTksMi4wMDU5LDAsMCwxLTIsMkg5VjIxaDlWMTZaIiBmaWxsPSIjMDBhYzQ3Ij48L3BhdGg+PHBvbHlnb24gZmlsbD0iIzMxYTk1MCIgcG9pbnRzPSIyNCAxMSAyNCAyMS40NSAxOCAxNiAxOCAxMSAyNCAxMSI+PC9wb2x5Z29uPjxwb2x5Z29uIGZpbGw9IiNlYTQ0MzUiIHBvaW50cz0iOSA1IDkgMTEgMyAxMSA5IDUiPjwvcG9seWdvbj48cmVjdCBmaWxsPSIjNDI4NWY0IiBoZWlnaHQ9IjExIiB3aWR0aD0iNiIgeD0iMyIgeT0iMTEiPjwvcmVjdD48cGF0aCBkPSJNMjQsN3Y0aC0uNUwxOCwxNlYxMUg5VjVIMjJBMi4wMDU5LDIuMDA1OSwwLDAsMSwyNCw3WiIgZmlsbD0iI2ZmYmEwMCI+PC9wYXRoPjxwYXRoIGQ9Ik05LDIxdjZINWEyLjAwNTksMi4wMDU5LDAsMCwxLTItMlYyMVoiIGZpbGw9IiMwMDY2ZGEiPjwvcGF0aD48cGF0aCBkPSJNMjksOC4yNlYyMy43NGEuOTk4OS45OTg5LDAsMCwxLTEuNjcuNzRMMjQsMjEuNDUsMTgsMTZsNS41LTUsLjUtLjQ1LDMuMzMtMy4wM0EuOTk4OS45OTg5LDAsMCwxLDI5LDguMjZaIiBmaWxsPSIjMDBhYzQ3Ij48L3BhdGg+PHBvbHlnb24gZmlsbD0iIzE4ODAzOCIgcG9pbnRzPSIyNCAxMC41NSAyNCAyMS40NSAxOCAxNiAyMy41IDExIDI0IDEwLjU1Ij48L3BvbHlnb24+PC9zdmc+" },
+  };
+
+  const RECORDING_FORMATS = [
+    { value: "wav", label: "WAV — lossless (largest)" },
+    { value: "flac", label: "FLAC — lossless compressed" },
+    { value: "m4a", label: "M4A / AAC — balanced" },
+    { value: "mp3", label: "MP3 — smallest" },
+  ];
+  const MIC_DEVICES = [
+    { value: "macbook-mic", label: "MacBook Pro Microphone" },
+    { value: "usb-mic", label: "Shure MV7 (USB)" },
+    { value: "airpods", label: "AirPods Pro" },
+  ];
+  const SYSTEM_AUDIO_DEVICES = [
+    { value: "loopback", label: "System Audio (loopback)" },
+    { value: "blackhole", label: "BlackHole 2ch" },
+    { value: "aggregate", label: "Aggregate Device" },
+  ];
+  const SYSTEM_AUDIO_BACKENDS = [
+    { value: "screencapturekit", label: "ScreenCaptureKit (recommended)" },
+    { value: "coreaudio", label: "CoreAudio" },
+    { value: "blackhole", label: "BlackHole driver" },
+  ];
+  const TRANSCRIPTION_MODELS = [
+    { value: "whisper", label: "Whisper (OpenAI)", variants: [
+      { value: "tiny", label: "tiny — fastest" },
+      { value: "base", label: "base" },
+      { value: "small", label: "small" },
+      { value: "medium", label: "medium" },
+      { value: "large-v3", label: "large-v3 — most accurate" },
+    ]},
+    { value: "parakeet", label: "Parakeet (NVIDIA)", variants: [
+      { value: "0.6b", label: "0.6B" },
+      { value: "1.1b", label: "1.1B" },
+    ]},
+    { value: "deepgram", label: "Deepgram Nova", variants: [
+      { value: "nova-2", label: "nova-2" },
+      { value: "nova-3", label: "nova-3" },
+    ]},
+  ];
+  const SUMMARY_MODELS = [
+    { value: "claude", label: "Claude (Anthropic)", local: false, variants: [
+      { value: "haiku", label: "Haiku — fast" },
+      { value: "sonnet", label: "Sonnet — balanced" },
+      { value: "opus", label: "Opus — most capable" },
+    ]},
+    { value: "gpt", label: "GPT (OpenAI)", local: false, variants: [
+      { value: "gpt-4o-mini", label: "gpt-4o-mini" },
+      { value: "gpt-4o", label: "gpt-4o" },
+    ]},
+    { value: "llama", label: "Llama (local)", local: true, variants: [
+      { value: "8b", label: "Llama 3.1 8B" },
+      { value: "70b", label: "Llama 3.1 70B" },
+    ]},
+    { value: "qwen", label: "Qwen (local)", local: true, variants: [
+      { value: "7b", label: "Qwen 2.5 7B" },
+      { value: "14b", label: "Qwen 2.5 14B" },
+      { value: "32b", label: "Qwen 2.5 32B" },
+    ]},
+  ];
+  const SUMMARY_LANGUAGES = [
+    { value: "auto", label: "Auto (dominant transcript language)" },
+    { value: "en", label: "English" },
+    { value: "es", label: "Spanish" },
+    { value: "fr", label: "French" },
+    { value: "de", label: "German" },
+    { value: "hi", label: "Hindi" },
+    { value: "ja", label: "Japanese" },
+    { value: "zh", label: "Chinese" },
+    { value: "pt", label: "Portuguese" },
+  ];
+
+  const RAW_MEETINGS = [
+    {
+      id: "m1", title: "Software Engineer — Final Round", company: "Acme Robotics",
+      date: "Jul 2, 2026", dateISO: "2026-07-02", time: "2:00 PM", duration: "00:42:10", platform: "zoom",
+      interviewer: { name: "Renee Okafor", email: "renee.okafor@acmerobotics.com" },
+      highlights: [
+        "Asked to design a rate limiter on the whiteboard.",
+        "Pushed back when the distributed case was skipped — cost time.",
+        "Strong two-way rapport with the hiring manager.",
+        "They flagged shallow depth on distributed systems.",
+        "Team is remote-first; standups run 9:30am PT.",
+        "Next round: system design + team meet-and-greet.",
+      ],
+      actionItems: [
+        { text: "Send a thank-you note today, mentioning the rate-limiter question", done: false },
+        { text: "Review token-bucket vs. sliding-window rate limiting trade-offs", done: false },
+        { text: "Ask the recruiter for the comp band before the next round", done: true },
+        { text: "Practice one more distributed-systems mock — weak spot twice now", done: false },
+      ],
+      comments: "Felt rushed on the whiteboard — bring a scratch pad next time.",
+      transcript: [
+        { speaker: "Renee (Interviewer)", time: "02:14", text: "Let’s start with a design problem — how would you build a rate limiter for a public API?" },
+        { speaker: "You", time: "02:40", text: "I’d start with a token bucket per client key, backed by a fast in-memory store." },
+        { speaker: "Renee (Interviewer)", time: "05:02", text: "What happens when that store lives across multiple regions?" },
+        { speaker: "You", time: "05:30", text: "Honestly, that’s the part I’d want to research more — I’d lean toward regional counters reconciled asynchronously." },
+        { speaker: "Renee (Interviewer)", time: "18:20", text: "Let’s switch gears — tell me about a time you disagreed with a teammate." },
+      ],
+    },
+    {
+      id: "m2", title: "Product Designer — Portfolio Review", company: "Lumen Health",
+      date: "Jul 1, 2026", dateISO: "2026-07-01", time: "11:00 AM", duration: "00:38:45", platform: "meet",
+      interviewer: { name: "Priya Chandran", email: "priya.chandran@lumenhealth.io" },
+      highlights: [
+        "Walked through the onboarding redesign case study.",
+        "They liked the before/after metrics slide.",
+        "Asked how designer-eng disagreements get resolved.",
+        "Mentioned a research-ops opening too.",
+        "Team ships on a two-week cadence.",
+      ],
+      actionItems: [
+        { text: "Send the Figma file with edit access", done: false },
+        { text: "Note the research-ops opening for later", done: false },
+        { text: "Draft a short answer on handling design pushback", done: false },
+      ],
+      comments: "",
+      transcript: [],
+    },
+    {
+      id: "m3", title: "Backend Engineer — Take-home Debrief", company: "Cedarwood Data",
+      date: "Jun 29, 2026", dateISO: "2026-06-29", time: "4:30 PM", duration: "00:51:02", platform: "teams",
+      interviewer: { name: "Marcus Webb", email: "marcus.webb@cedarwooddata.com" },
+      highlights: [
+        "Walked through the take-home’s schema choices.",
+        "Questioned why the join table wasn’t indexed.",
+        "Liked the edge-case test coverage.",
+        "Asked about schema migrations at scale.",
+        "Said a decision is expected within a week.",
+      ],
+      actionItems: [
+        { text: "Follow up in 5 business days if no word back", done: false },
+        { text: "Write up the indexing fix as a talking point for next time", done: true },
+      ],
+      comments: "",
+      transcript: [
+        { speaker: "Marcus (Interviewer)", time: "04:10", text: "Walk me through why you structured the join table this way." },
+        { speaker: "You", time: "04:35", text: "I optimized for write simplicity, but I didn’t add an index on the foreign key — I’d fix that first." },
+        { speaker: "Marcus (Interviewer)", time: "22:00", text: "How would this hold up if the table hit 50 million rows?" },
+        { speaker: "You", time: "22:20", text: "It would degrade on the unindexed lookups — I’d partition by tenant and add that index." },
+      ],
+    },
+    {
+      id: "m4", title: "Customer Success Lead — Intro Call", company: "Northwind Labs",
+      date: "Jun 27, 2026", dateISO: "2026-06-27", time: "9:00 AM", duration: "00:24:18", platform: "zoom",
+      interviewer: { name: "Dana Kowalski", email: "dana.k@northwindlabs.com" },
+      highlights: [
+        "Screening call, mostly background questions.",
+        "Asked about handling an angry enterprise customer.",
+        "Salary expectations discussed — gave a range.",
+        "Recruiter will loop in the hiring manager next.",
+      ],
+      actionItems: [
+        { text: "Send the churn-recovery case-study writeup", done: false },
+        { text: "Confirm availability for the hiring-manager round", done: false },
+      ],
+      comments: "",
+      transcript: [],
+    },
+    {
+      id: "m5", title: "Frontend Engineer — Panel Interview", company: "Brightline",
+      date: "Jun 24, 2026", dateISO: "2026-06-24", time: "1:00 PM", duration: "01:05:40", platform: "meet",
+      interviewer: { name: "Panel (3)", email: "panel@brightline.dev" },
+      highlights: [
+        "Three-person panel, rotated through React and CSS questions.",
+        "Nailed the accessibility question on focus traps.",
+        "Blanked on a CSS specificity question — needs review.",
+        "Asked about testing philosophy — unit vs. e2e.",
+        "Good energy from the panel by the end.",
+      ],
+      actionItems: [
+        { text: "Review CSS specificity and cascade layers", done: false },
+        { text: "Send a follow-up note to all three panelists", done: false },
+        { text: "Prep a testing-philosophy answer with real examples", done: false },
+      ],
+      comments: "Panel interviews move fast — keep answers under 90 seconds.",
+      transcript: [
+        { speaker: "Panelist 1", time: "08:00", text: "How would you make a modal accessible for keyboard users?" },
+        { speaker: "You", time: "08:20", text: "Trap focus inside it, restore focus on close, and label it with aria-modal." },
+        { speaker: "Panelist 2", time: "31:00", text: "Which selector wins here — a class or an attribute selector of equal specificity written later?" },
+        { speaker: "You", time: "31:25", text: "I froze on that one — I’d want to double check the exact specificity math." },
+      ],
+    },
+    {
+      id: "m6", title: "Data Analyst — Screening Call", company: "Fathom Analytics",
+      date: "Jun 20, 2026", dateISO: "2026-06-20", time: "3:00 PM", duration: "00:19:52", platform: "zoom",
+      interviewer: { name: "Alicia Tran", email: "alicia.tran@fathom.io" },
+      highlights: [
+        "Quick fit check, no technical questions.",
+        "Asked why I’m looking to leave my current focus area.",
+        "Confirmed remote-only works for this role.",
+      ],
+      actionItems: [
+        { text: "No action needed yet — waiting to hear back", done: true },
+      ],
+      comments: "",
+      transcript: [],
+    },
+    {
+      id: "m7", title: "UX Researcher — Hiring Manager Chat", company: "Glasswing",
+      date: "Jun 18, 2026", dateISO: "2026-06-18", time: "10:30 AM", duration: "00:33:15", platform: "teams",
+      interviewer: { name: "Tom Reyes", email: "tom.reyes@glasswing.design" },
+      highlights: [
+        "Deep dive on a mixed-methods study led previously.",
+        "Asked how I push back on stakeholders who ignore research.",
+        "Team is rebuilding its research repository.",
+        "Good signal — asked about notice period.",
+      ],
+      actionItems: [
+        { text: "Send two writing samples by Friday", done: false },
+        { text: "Prepare a story about stakeholder pushback", done: false },
+      ],
+      comments: "",
+      transcript: [],
+    },
+    {
+      id: "m8", title: "DevOps Engineer — Technical Screen", company: "Ridgeline Systems",
+      date: "Jun 15, 2026", dateISO: "2026-06-15", time: "4:00 PM", duration: "00:47:30", platform: "meet",
+      interviewer: { name: "Kwame Asante", email: "kwame.asante@ridgeline.systems" },
+      highlights: [
+        "Live-debugged a broken CI pipeline.",
+        "Found the fix but initially missed it was a caching issue.",
+        "Asked about on-call experience and rotation comfort.",
+        "Said the next step would be a system design round.",
+      ],
+      actionItems: [
+        { text: "Review CI caching pitfalls before the next round", done: false },
+        { text: "Ask about the on-call compensation structure", done: false },
+      ],
+      comments: "",
+      transcript: [],
+    },
+  ];
+
+  function seedMeetings() {
+    return RAW_MEETINGS.map((m) => ({
+      ...m,
+      actionItems: m.actionItems.map((a, i) => ({ id: m.id + "-a" + i, text: a.text, done: a.done })),
+    }));
+  }
+
+  global.Data = {
+    fmtDuration, fmtShortDate, durationToSeconds,
+    PLATFORM_META, RECORDING_FORMATS, MIC_DEVICES, SYSTEM_AUDIO_DEVICES, SYSTEM_AUDIO_BACKENDS,
+    TRANSCRIPTION_MODELS, SUMMARY_MODELS, SUMMARY_LANGUAGES, seedMeetings,
+  };
+})(window);
+
+
+/* ===== store.js ===== */
+// App state + actions, ported from the design prototype's Component class.
+// Pure state management — no DOM here. app.js subscribes via store.onChange.
+(function (global) {
+  "use strict";
+  const D = global.Data;
+
+  class Store {
+    constructor() {
+      this.state = {
+        view: "list",
+        activeId: null,
+        query: "",
+        platformFilter: "all",
+        dateFrom: null,
+        dateTo: null,
+        expandedId: null,
+        detailTab: "overview",
+        editKey: null,
+        editDraft: "",
+        newItemDraft: "",
+        copiedKey: null,
+        liveActive: false,
+        liveElapsed: 0,
+        meetings: D.seedMeetings(),
+        sidebarCollapsed: false,
+        isDateModalOpen: false,
+        isDetailModalOpen: false,
+        detailModalId: null,
+        uploadModalOpen: false,
+        uploadFileName: null,
+        uploadTitle: "",
+        uploadCompany: "",
+        uploadPlatform: "zoom",
+        uploadStatus: "idle",
+        theme: "light",
+        sortKey: null,
+        sortDir: "asc",
+        connectors: { google: false, zoom: false, outlook: false },
+        settingsSection: "general",
+        openSelect: null,
+        settings: {
+          dataStorage: "~/Library/Application Support/Sauly/recordings",
+          usageAnalytics: true,
+          saveAudioFiles: true,
+          recordingFormat: "wav",
+          recordingStartNotification: true,
+          autoDetectZoom: true,
+          autoDetectTeams: true,
+          autoDetectMeet: false,
+          micDevice: "macbook-mic",
+          systemAudioDevice: "loopback",
+          systemAudioBackend: "screencapturekit",
+          meetingAutoDetect: true,
+          transcriptionModel: "whisper",
+          transcriptionVariant: "large-v3",
+          autoSummary: true,
+          summaryDefaultLang: "auto",
+          summaryModel: "claude",
+          summaryVariant: "sonnet",
+          betaLocalDiarization: false,
+          betaLiveSuggestions: false,
+          betaSmartClips: false,
+        },
+      };
+      this._onChange = null;
+    }
+
+    onChange(fn) { this._onChange = fn; }
+
+    setState(patch) {
+      if (typeof patch === "function") patch = patch(this.state);
+      Object.assign(this.state, patch);
+      if (this._onChange) this._onChange();
+    }
+
+    // ── navigation ──────────────────────────────────────────────────
+    goToDashboard() { this.setState({ view: "dashboard" }); }
+    goToMeetingsNav() { this.setState({ view: "list" }); }
+    goToSettings() { this.setState({ view: "settings" }); }
+    backToList() { this.setState({ view: "list" }); }
+    openDetail(id) { this.setState({ view: "detail", activeId: id, detailTab: "overview", newItemDraft: "", editKey: null }); }
+    setDetailTab(tab) { this.setState({ detailTab: tab }); }
+
+    toggleSidebar() { this.setState((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })); }
+
+    // ── theme ───────────────────────────────────────────────────────
+    toggleTheme() { this.setState((s) => ({ theme: s.theme === "dark" ? "light" : "dark" })); }
+    setTheme(theme) { this.setState({ theme }); }
+
+    // ── sort / filter / search ─────────────────────────────────────
+    setSort(key) {
+      this.setState((s) => (s.sortKey === key ? { sortDir: s.sortDir === "asc" ? "desc" : "asc" } : { sortKey: key, sortDir: "asc" }));
+    }
+    setQuery(v) { this.setState({ query: v }); }
+    setPlatformFilter(p) { this.setState({ platformFilter: p }); }
+    setDateFrom(v) { this.setState({ dateFrom: v ? new Date(v) : null }); }
+    setDateTo(v) { this.setState({ dateTo: v ? new Date(v) : null }); }
+    toggleDateCard() { this.setState((s) => ({ isDateModalOpen: !s.isDateModalOpen, openSelect: null })); }
+    closeDateModal() { this.setState({ isDateModalOpen: false }); }
+    clearDateRange() { this.setState({ dateFrom: null, dateTo: null }); }
+
+    // ── selects (generic dropdown open/close) ──────────────────────
+    toggleSelect(key) { this.setState((s) => ({ openSelect: s.openSelect === key ? null : key, isDateModalOpen: false })); }
+    closeSelect() { this.setState({ openSelect: null }); }
+
+    // ── row expand / detail modal ──────────────────────────────────
+    toggleExpand(id) {
+      this.setState((s) => ({ expandedId: s.expandedId === id ? null : id, newItemDraft: "", editKey: null }));
+    }
+    openDetailModal(id) { this.setState({ detailModalId: id, isDetailModalOpen: true, detailTab: "overview" }); }
+    closeDetailModal() { this.setState({ isDetailModalOpen: false, detailModalId: null }); }
+
+    // ── live session (dashboard) ────────────────────────────────────
+    startLiveSession() {
+      clearInterval(this._liveTimer);
+      this.setState({ liveActive: true, liveElapsed: 0 });
+      this._liveTimer = setInterval(() => this.setState((s) => ({ liveElapsed: s.liveElapsed + 1 })), 1000);
+    }
+    endLiveSession() {
+      clearInterval(this._liveTimer);
+      this.setState({ liveActive: false, liveElapsed: 0 });
+    }
+
+    // ── upload flow ──────────────────────────────────────────────────
+    openUploadModal() {
+      this.setState({ uploadModalOpen: true, uploadFileName: null, uploadTitle: "", uploadCompany: "", uploadPlatform: "zoom", uploadStatus: "idle" });
+    }
+    closeUploadModal() {
+      if (this.state.uploadStatus === "processing") return;
+      this.setState({ uploadModalOpen: false });
+    }
+    setUploadFile(file) {
+      const name = file && (file.name || String(file));
+      const guess = name ? name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim() : "";
+      this.setState((s) => ({ uploadFileName: name, uploadTitle: s.uploadTitle || guess }));
+    }
+    clearUploadFile() { this.setState({ uploadFileName: null }); }
+    setUploadTitle(v) { this.setState({ uploadTitle: v }); }
+    setUploadCompany(v) { this.setState({ uploadCompany: v }); }
+    setUploadPlatform(v) { this.setState({ uploadPlatform: v, openSelect: null }); }
+    submitUpload() {
+      if (!this.state.uploadFileName || this.state.uploadStatus === "processing") return;
+      this.setState({ uploadStatus: "processing" });
+      clearTimeout(this._uploadTimer);
+      this._uploadTimer = setTimeout(() => {
+        const now = new Date();
+        const id = "up" + now.getTime();
+        const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const meeting = {
+          id,
+          title: this.state.uploadTitle.trim() || "Uploaded recording",
+          company: this.state.uploadCompany.trim() || "Imported audio",
+          date: MON[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear(),
+          dateISO: now.toISOString().slice(0, 10),
+          time: now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+          duration: "00:00:00",
+          platform: this.state.uploadPlatform,
+          interviewer: { name: "Uploaded file", email: this.state.uploadFileName },
+          highlights: ["Summary generated from the uploaded audio file.", "Review and edit these highlights as needed."],
+          actionItems: [{ id: id + "-a0", text: "Review the auto-generated summary", done: false }],
+          comments: "",
+          transcript: [{ speaker: "Speaker 1", time: "00:03", text: "Transcript generated from " + this.state.uploadFileName + "." }],
+          uploaded: true,
+        };
+        this.setState((s) => ({ meetings: [meeting, ...s.meetings], uploadModalOpen: false, uploadStatus: "done", view: "list" }));
+        this.openDetailModal(id);
+      }, 1600);
+    }
+
+    toggleConnector(key) { this.setState((s) => ({ connectors: { ...s.connectors, [key]: !s.connectors[key] } })); }
+
+    // ── action items ─────────────────────────────────────────────────
+    toggleActionItem(meetingId, itemId) {
+      this.setState((s) => ({
+        meetings: s.meetings.map((m) => (m.id !== meetingId ? m : { ...m, actionItems: m.actionItems.map((a) => (a.id === itemId ? { ...a, done: !a.done } : a)) })),
+      }));
+    }
+    startEdit(meetingId, itemId) {
+      const m = this.state.meetings.find((x) => x.id === meetingId);
+      const item = m && m.actionItems.find((a) => a.id === itemId);
+      this.setState({ editKey: meetingId + ":" + itemId, editDraft: item ? item.text : "" });
+    }
+    setEditDraft(v) { this.setState({ editDraft: v }); }
+    cancelEdit() { this.setState({ editKey: null, editDraft: "" }); }
+    saveEdit() {
+      const key = this.state.editKey;
+      if (!key) return;
+      const idx = key.indexOf(":");
+      const meetingId = key.slice(0, idx);
+      const itemId = key.slice(idx + 1);
+      const text = this.state.editDraft.trim();
+      this.setState((s) => ({
+        editKey: null, editDraft: "",
+        meetings: s.meetings.map((m) => (m.id !== meetingId ? m : { ...m, actionItems: m.actionItems.map((a) => (a.id === itemId && text ? { ...a, text } : a)) })),
+      }));
+    }
+    setNewItemDraft(v) { this.setState({ newItemDraft: v }); }
+    addActionItem(meetingId) {
+      const text = this.state.newItemDraft.trim();
+      if (!text) return;
+      this.setState((s) => ({
+        newItemDraft: "",
+        meetings: s.meetings.map((m) => (m.id !== meetingId ? m : { ...m, actionItems: [...m.actionItems, { id: meetingId + "-a" + Date.now(), text, done: false }] })),
+      }));
+    }
+    removeActionItem(meetingId, itemId) {
+      this.setState((s) => ({
+        meetings: s.meetings.map((m) => (m.id !== meetingId ? m : { ...m, actionItems: m.actionItems.filter((a) => a.id !== itemId) })),
+      }));
+    }
+
+    // ── comments ────────────────────────────────────────────────────
+    setComments(meetingId, html) {
+      this.setState((s) => ({ meetings: s.meetings.map((m) => (m.id === meetingId ? { ...m, comments: html } : m)) }));
+    }
+
+    copySummary(meeting) {
+      const lines = [];
+      lines.push(meeting.title + " — " + meeting.company);
+      lines.push("");
+      lines.push("Key highlights:");
+      meeting.highlights.forEach((h, i) => lines.push(i + 1 + ". " + h));
+      lines.push("");
+      lines.push("Action items:");
+      meeting.actionItems.forEach((a) => lines.push("- [" + (a.done ? "x" : " ") + "] " + a.text));
+      const text = lines.join("\n");
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(() => {});
+      this.setState({ copiedKey: meeting.id });
+      clearTimeout(this._copyTimer);
+      this._copyTimer = setTimeout(() => this.setState({ copiedKey: null }), 1800);
+    }
+
+    // ── settings ────────────────────────────────────────────────────
+    setSettingsSection(id) { this.setState({ settingsSection: id, openSelect: null }); }
+    updateSetting(key, value) { this.setState((s) => ({ settings: { ...s.settings, [key]: value } })); }
+    setTranscriptionModel(v) {
+      const variant = (D.TRANSCRIPTION_MODELS.find((m) => m.value === v) || D.TRANSCRIPTION_MODELS[0]).variants[0].value;
+      this.setState((s) => ({ settings: { ...s.settings, transcriptionModel: v, transcriptionVariant: variant }, openSelect: null }));
+    }
+    setSummaryModel(v) {
+      const variant = (D.SUMMARY_MODELS.find((m) => m.value === v) || D.SUMMARY_MODELS[0]).variants[0].value;
+      this.setState((s) => ({ settings: { ...s.settings, summaryModel: v, summaryVariant: variant }, openSelect: null }));
+    }
+    pinSummaryLang(v) { this.updateSetting("summaryDefaultLang", v); }
+    selectSetting(key, value) { this.updateSetting(key, value); this.setState({ openSelect: null }); }
+
+    // ── derived view-models ─────────────────────────────────────────
+    highlightMatch(text) {
+      const q = (this.state.query || "").trim();
+      const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const escaped = esc(text);
+      if (!q) return escaped;
+      const rxEsc = esc(q).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      return escaped.replace(new RegExp("(" + rxEsc + ")", "gi"), "<mark>$1</mark>");
+    }
+
+    buildActionItem(meetingId, item) {
+      const key = meetingId + ":" + item.id;
+      const isEditing = this.state.editKey === key;
+      return {
+        id: item.id, text: item.text, done: item.done, isEditing,
+        editValue: isEditing ? this.state.editDraft : "",
+      };
+    }
+
+    filteredSortedRows() {
+      const q = this.state.query.trim().toLowerCase();
+      const platformFilter = this.state.platformFilter;
+      let list = this.state.meetings.filter((m) => {
+        if (platformFilter !== "all" && m.platform !== platformFilter) return false;
+        if (q) {
+          const hay = (
+            m.title + " " + m.company + " " + m.interviewer.name + " " +
+            (m.highlights || []).join(" ") + " " + (m.actionItems || []).map((a) => a.text).join(" ") + " " +
+            (m.transcript || []).map((t) => t.speaker + " " + t.text).join(" ") + " " + (m.comments || "")
+          ).toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        const d = new Date(m.dateISO);
+        if (this.state.dateFrom && d < this.state.dateFrom) return false;
+        if (this.state.dateTo && d > this.state.dateTo) return false;
+        return true;
+      });
+      const sortKey = this.state.sortKey;
+      if (sortKey) {
+        const dir = this.state.sortDir === "desc" ? -1 : 1;
+        const getSortVal = (m) => {
+          switch (sortKey) {
+            case "title": return m.title.toLowerCase();
+            case "date": return new Date(m.dateISO).getTime();
+            case "duration": return D.durationToSeconds(m.duration);
+            case "platform": return D.PLATFORM_META[m.platform].label.toLowerCase();
+            case "interviewer": return m.interviewer.name.toLowerCase();
+            default: return "";
+          }
+        };
+        list = [...list].sort((a, b) => {
+          const av = getSortVal(a), bv = getSortVal(b);
+          if (av < bv) return -1 * dir;
+          if (av > bv) return 1 * dir;
+          return 0;
+        });
+      }
+      return list;
+    }
+  }
+
+  global.Store = Store;
+})(window);
+
+
+/* ===== views.js ===== */
+// View-render functions: state + data in, HTML string out. No DOM access,
+// no store mutation — everything interactive is expressed as
+// data-click/data-input/... attributes dispatched by app.js.
+(function (global) {
+  "use strict";
+  const D = global.Data;
+  const esc = UI.esc;
+  const act = UI.act;
+
+  function isoDate(d) { return d ? d.toISOString().slice(0, 10) : ""; }
+
+  // ── Sidebar ───────────────────────────────────────────────────────
+  function Sidebar(s) {
+    const collapsed = s.sidebarCollapsed;
+    const dark = s.theme === "dark";
+    return (
+      '<aside class="sidebar' + (collapsed ? " collapsed" : "") + '">' +
+      '<div class="sidebar-header">' +
+      (collapsed
+        ? '<img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTc0IiBoZWlnaHQ9IjE2NSIgdmlld0JveD0iMCAwIDE3NCAxNjUiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0xNzMuOTM5IDc5LjU5MDhDMTczLjkzOSA4NC44OTQ5IDE3MS44MzIgODkuOTgxOCAxNjguMDgyIDkzLjczMjRMMTAzLjM2MyAxNTguNDVDOTkuNjEyNiAxNjIuMjAxIDk0LjUyNTkgMTY0LjMwOSA4OS4yMjE3IDE2NC4zMDlINTAuOTk3MVYxMjYuMDA2SDEwMS4zNjJDMTE3LjkzMSAxMjYuMDA2IDEzMS4zNjIgMTEyLjU3NCAxMzEuMzYyIDk2LjAwNTlWNTYuNTg0TDE3My45MzkgNTYuNTgzVjc5LjU5MDhaTTEyMi45NDIgMzguMzAyN0g3Mi41NzcxQzU2LjAwOSAzOC4zMDMgNDIuNTc3NCA1MS43MzQ1IDQyLjU3NzEgNjguMzAyN1YxMDcuNzI1TDAgMTA3LjcyNlY4NC43MTc4QzAuMDAwMTA3OTUgNzkuNDEzNyAyLjEwNjk3IDc0LjMyNjggNS44NTc0MiA3MC41NzYyTDcwLjU3NjIgNS44NTg0Qzc0LjMyNjggMi4xMDc3NCA3OS40MTM2IDcuODc4ODFlLTA1IDg0LjcxNzggMEgxMjIuOTQyVjM4LjMwMjdaIiBmaWxsPSJ1cmwoI3BhaW50MF9saW5lYXJfMjgzNF83NzM2KSI+PC9wYXRoPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJwYWludDBfbGluZWFyXzI4MzRfNzczNiIgeDE9IjUwLjA0MDIiIHkxPSItNi42NjAxNiIgeDI9Ijg2Ljk2OTciIHkyPSIxNjQuMzA5IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiNDQzQ1QjYiPjwvc3RvcD4KPHN0b3Agb2Zmc2V0PSIwLjM1NTc2OSIgc3RvcC1jb2xvcj0iI0NDQURGRiI+PC9zdG9wPgo8c3RvcCBvZmZzZXQ9IjAuNjczMDc3IiBzdG9wLWNvbG9yPSIjREQ5NUQ3Ij48L3N0b3A+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzYwM0ZEOSI+PC9zdG9wPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPg==" alt="Sauly" style="height:28px;width:auto;">'
+        : (dark
+            ? '<img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTM2IiBoZWlnaHQ9IjE2NSIgdmlld0JveD0iMCAwIDUzNiAxNjUiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0xNzMuOTM5IDc5LjU5MDhDMTczLjkzOSA4NC44OTQ5IDE3MS44MzIgODkuOTgxOCAxNjguMDgyIDkzLjczMjRMMTAzLjM2MyAxNTguNDVDOTkuNjEyNiAxNjIuMjAxIDk0LjUyNTkgMTY0LjMwOSA4OS4yMjE3IDE2NC4zMDlINTAuOTk3MVYxMjYuMDA2SDEwMS4zNjJDMTE3LjkzMSAxMjYuMDA2IDEzMS4zNjIgMTEyLjU3NCAxMzEuMzYyIDk2LjAwNTlWNTYuNTg0TDE3My45MzkgNTYuNTgzVjc5LjU5MDhaTTEyMi45NDIgMzguMzAyN0g3Mi41NzcxQzU2LjAwOSAzOC4zMDMgNDIuNTc3NCA1MS43MzQ1IDQyLjU3NzEgNjguMzAyN1YxMDcuNzI1TDAgMTA3LjcyNlY4NC43MTc4QzAuMDAwMTA3OTUgNzkuNDEzNyAyLjEwNjk3IDc0LjMyNjggNS44NTc0MiA3MC41NzYyTDcwLjU3NjIgNS44NTg0Qzc0LjMyNjggMi4xMDc3NCA3OS40MTM2IDcuODc4ODFlLTA1IDg0LjcxNzggMEgxMjIuOTQyVjM4LjMwMjdaIiBmaWxsPSJ1cmwoI3BhaW50MF9saW5lYXJfMjgzNF83NzM1KSI+PC9wYXRoPgo8cGF0aCBkPSJNNDkyLjg1NCA5Mi41NTQ3SDQ5My4yNTNMNTA5LjY1MyA1Mi4xNTQzSDUyNi42NTNMNTAwLjk1MyAxMTIuMTU0TDQ5Ni4wNTMgMTIzLjc1NEM0OTQuMzg2IDEyNy42ODcgNDkyLjQ1MyAxMzAuNzIxIDQ5MC4yNTMgMTMyLjg1NEM0ODguMDUzIDEzNS4wNTQgNDg0LjY4NiAxMzYuMTU0IDQ4MC4xNTMgMTM2LjE1NEg0NjYuNDUzVjEyMi44NTRINDc5LjY1M0w0ODQuMzU0IDExMS42NTRMNDU4LjQ1MyA1Mi4xNTQzSDQ3Ni4wNTNMNDkyLjg1NCA5Mi41NTQ3Wk01MzUuNDE4IDExMy41OUg1MTguMzgzVjk1LjcwN0g1MzUuNDE4VjExMy41OVpNMjM4LjkzOCAyOS45NTUxQzI0OC44NzEgMjkuOTU1MSAyNTYuODcxIDMyLjE4ODYgMjYyLjkzOCAzNi42NTUzQzI2OS4wMDQgNDEuMTIxOSAyNzIuNDA0IDQ3LjM1NTUgMjczLjEzOCA1NS4zNTU1SDI1NS43MzdDMjUzLjgwNCA0Ny4yMjIxIDI0Ny45MDQgNDMuMTU1MyAyMzguMDM3IDQzLjE1NTNDMjMzLjU3MSA0My4xNTUzIDIzMC4wNyA0My45NTQ3IDIyNy41MzcgNDUuNTU0N0MyMjUuMDA0IDQ3LjE1NDcgMjIzLjczNyA0OS40NTUxIDIyMy43MzcgNTIuNDU1MUMyMjMuNzM3IDU3LjA1NTEgMjI3LjAzOCA2MC4wMjIxIDIzMy42MzggNjEuMzU1NUwyNTEuMDM3IDY0Ljk1NTFDMjU4LjkwNCA2Ni41NTUgMjY0LjYzNyA2OS4yNTQ4IDI2OC4yMzcgNzMuMDU0N0MyNzEuOTA0IDc2Ljc4OCAyNzMuNzM3IDgxLjg1NSAyNzMuNzM3IDg4LjI1NDlDMjczLjczNyA5Ni4xODgyIDI3MC44MzcgMTAyLjM1NSAyNjUuMDM3IDEwNi43NTVDMjU5LjMwNCAxMTEuMTU1IDI1MS4xMzcgMTEzLjM1NSAyNDAuNTM3IDExMy4zNTVDMjI5LjY3MSAxMTMuMzU1IDIyMS4wMDQgMTEwLjk4OCAyMTQuNTM3IDEwNi4yNTVDMjA4LjA3MSAxMDEuNDU1IDIwNC41MzggOTQuODIxOCAyMDMuOTM4IDg2LjM1NTVIMjIxLjMzOEMyMjEuOTM4IDkwLjc1NTMgMjIzLjkwNCA5NC4wODg5IDIyNy4yMzcgOTYuMzU1NUMyMzAuNjM3IDk4LjU1NTQgMjM1LjMwNCA5OS42NTUyIDI0MS4yMzcgOTkuNjU1M0MyNDYuNTA0IDk5LjY1NTMgMjUwLjQ3MSA5OC44MjE5IDI1My4xMzggOTcuMTU1M0MyNTUuODA0IDk1LjQyMTkgMjU3LjEzOCA5Mi44ODggMjU3LjEzOCA4OS41NTQ3QzI1Ny4xMzggODYuOTU0OSAyNTYuMjcgODQuODg4NyAyNTQuNTM3IDgzLjM1NTVDMjUyLjg3MSA4MS44MjIyIDI1MC4xMzggODAuNjU1NSAyNDYuMzM4IDc5Ljg1NTVMMjI5LjYzOCA3Ni40NTUxQzIyMi4xMDQgNzQuODU1MSAyMTYuNDcxIDcyLjIyMTQgMjEyLjczNyA2OC41NTQ3QzIwOS4wMDQgNjQuODIxNCAyMDcuMTM4IDU5Ljk4NzkgMjA3LjEzOCA1NC4wNTQ3QzIwNy4xMzggNDYuNTIxNiAyMDkuOTcxIDQwLjYyMjEgMjE1LjYzOCAzNi4zNTU1QzIyMS4zNzEgMzIuMDg4OCAyMjkuMTM3IDI5Ljk1NTEgMjM4LjkzOCAyOS45NTUxWk0zMTAuNjE1IDUwLjk1NTFDMzE5LjU0OSA1MC45NTUxIDMyNi4zNDkgNTIuOTU1MSAzMzEuMDE2IDU2Ljk1NTFDMzM1Ljc0OSA2MC45NTUxIDMzOC4xMTUgNjYuNzg4NCAzMzguMTE1IDc0LjQ1NTFWOTUuNzU0OUgzNDUuOTE2VjExMi4xNTVIMzI5LjExNVYxMDIuMzU1SDMyNC45MTZDMzIyLjg0OSAxMDUuODIyIDMyMC4wODIgMTA4LjUyMiAzMTYuNjE1IDExMC40NTVDMzEzLjE0OSAxMTIuMzIyIDMwOC44MTUgMTEzLjI1NSAzMDMuNjE1IDExMy4yNTVDMjk2LjU0OSAxMTMuMjU1IDI5MS4wMTYgMTExLjU1NSAyODcuMDE2IDEwOC4xNTVDMjgzLjAxNiAxMDQuNjg5IDI4MS4wMTYgMTAwLjE1NSAyODEuMDE2IDk0LjU1NDdDMjgxLjAxNiA4OC42MjE2IDI4My4wODMgODQuMDU1NCAyODcuMjE2IDgwLjg1NTVDMjkxLjM0OSA3Ny42NTU1IDI5Ny4yODIgNzYuMDU0NyAzMDUuMDE2IDc2LjA1NDdIMzIyLjIxNlY3My43NTQ5QzMyMi4yMTYgNjcuMjg4MyAzMTguMzQ4IDY0LjA1NDcgMzEwLjYxNSA2NC4wNTQ3QzMwMy44ODIgNjQuMDU0OCAyOTkuODE2IDY2LjM4ODQgMjk4LjQxNiA3MS4wNTQ3SDI4MS45MTZDMjgzLjI0OSA2NC40NTQ5IDI4Ni4zNDkgNTkuNDU0NiAyOTEuMjE2IDU2LjA1NDdDMjk2LjA4MiA1Mi42NTQ5IDMwMi41NDkgNTAuOTU1MSAzMTAuNjE1IDUwLjk1NTFaTTM3MS4zMzQgODUuNDU0MUMzNzEuMzM0IDg5Ljc4NzQgMzcyLjQzNSA5My4wNTM5IDM3NC42MzUgOTUuMjUzOUMzNzYuOTAxIDk3LjM4NzIgMzgwLjI2OCA5OC40NTQxIDM4NC43MzQgOTguNDU0MUMzODkuMzM0IDk4LjQ1NDEgMzkyLjg2NyA5Ny4yODc0IDM5NS4zMzQgOTQuOTU0MUMzOTcuODY3IDkyLjYyMDggMzk5LjEzNSA4OS4yODc0IDM5OS4xMzUgODQuOTU0MVY1Mi4xNTQzSDQxNS43MzRWOTUuNzUzOUg0MjMuOTM1VjExMi4xNTRINDA3LjEzNVYxMDIuMzU0SDQwMi45MzVDNDAwLjUzNSAxMDUuODg4IDM5Ny42MDEgMTA4LjU4NyAzOTQuMTM1IDExMC40NTRDMzkwLjczNSAxMTIuMzIxIDM4Ni4yMzUgMTEzLjI1NCAzODAuNjM1IDExMy4yNTRDMzcyLjMwMSAxMTMuMjU0IDM2NS45MDEgMTExLjA1NCAzNjEuNDM1IDEwNi42NTRDMzU2Ljk2OCAxMDIuMjU0IDM1NC43MzQgOTYuMjU0MyAzNTQuNzM0IDg4LjY1NDNWNTIuMTU0M0gzNzEuMzM0Vjg1LjQ1NDFaTTQ1MC45OTggMTEyLjE1NEg0MzQuMzk4VjI4LjE1NDNINDUwLjk5OFYxMTIuMTU0Wk0zMDUuODE1IDg3LjA1NDdDMjk5LjgxNiA4Ny4wNTQ3IDI5Ni44MTYgODkuMjg4NCAyOTYuODE1IDkzLjc1NDlDMjk2LjgxNSA5NS45NTQ5IDI5Ny42NDkgOTcuNjU1NSAyOTkuMzE1IDk4Ljg1NTVDMzAwLjk4MiAxMDAuMDU1IDMwMy4yNDkgMTAwLjY1NSAzMDYuMTE1IDEwMC42NTVDMzA5LjI0OSAxMDAuNjU1IDMxMi4wMTYgMTAwLjA4OCAzMTQuNDE2IDk4Ljk1NTFDMzE2LjgxNiA5Ny44MjE4IDMxOC43MTUgOTYuMzIxNiAzMjAuMTE1IDk0LjQ1NTFDMzIxLjUxNSA5Mi41MjE3IDMyMi4yMTYgOTAuMzU1MSAzMjIuMjE2IDg3Ljk1NTFWODcuMDU0N0gzMDUuODE1WiIgZmlsbD0id2hpdGUiPjwvcGF0aD4KPGRlZnM+CjxsaW5lYXJHcmFkaWVudCBpZD0icGFpbnQwX2xpbmVhcl8yODM0Xzc3MzUiIHgxPSI1MC4wNDAyIiB5MT0iLTYuNjYwMTYiIHgyPSI4Ni45Njk3IiB5Mj0iMTY0LjMwOSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjQ0M0NUI2Ij48L3N0b3A+CjxzdG9wIG9mZnNldD0iMC4zNTU3NjkiIHN0b3AtY29sb3I9IiNDQ0FERkYiPjwvc3RvcD4KPHN0b3Agb2Zmc2V0PSIwLjY3MzA3NyIgc3RvcC1jb2xvcj0iI0REOTVENyI+PC9zdG9wPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM2MDNGRDkiPjwvc3RvcD4KPC9saW5lYXJHcmFkaWVudD4KPC9kZWZzPgo8L3N2Zz4=" alt="Sauly" style="height:26px;width:auto;">'
+            : '<img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTM2IiBoZWlnaHQ9IjE2NSIgdmlld0JveD0iMCAwIDUzNiAxNjUiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0xNzMuOTM5IDc5LjU5MDhDMTczLjkzOSA4NC44OTQ5IDE3MS44MzIgODkuOTgxOCAxNjguMDgyIDkzLjczMjRMMTAzLjM2MyAxNTguNDVDOTkuNjEyNiAxNjIuMjAxIDk0LjUyNTkgMTY0LjMwOSA4OS4yMjE3IDE2NC4zMDlINTAuOTk3MVYxMjYuMDA2SDEwMS4zNjJDMTE3LjkzMSAxMjYuMDA2IDEzMS4zNjIgMTEyLjU3NCAxMzEuMzYyIDk2LjAwNTlWNTYuNTg0TDE3My45MzkgNTYuNTgzVjc5LjU5MDhaTTEyMi45NDIgMzguMzAyN0g3Mi41NzcxQzU2LjAwOSAzOC4zMDMgNDIuNTc3NCA1MS43MzQ1IDQyLjU3NzEgNjguMzAyN1YxMDcuNzI1TDAgMTA3LjcyNlY4NC43MTc4QzAuMDAwMTA3OTUgNzkuNDEzNyAyLjEwNjk3IDc0LjMyNjggNS44NTc0MiA3MC41NzYyTDcwLjU3NjIgNS44NTg0Qzc0LjMyNjggMi4xMDc3NCA3OS40MTM2IDcuODc4ODFlLTA1IDg0LjcxNzggMEgxMjIuOTQyVjM4LjMwMjdaIiBmaWxsPSJ1cmwoI3BhaW50MF9saW5lYXJfMjgzNF83NzM3KSI+PC9wYXRoPgo8cGF0aCBkPSJNNDkyLjg1NCA5Mi41NTQ3SDQ5My4yNTNMNTA5LjY1MyA1Mi4xNTQzSDUyNi42NTNMNTAwLjk1MyAxMTIuMTU0TDQ5Ni4wNTMgMTIzLjc1NEM0OTQuMzg2IDEyNy42ODcgNDkyLjQ1MyAxMzAuNzIxIDQ5MC4yNTMgMTMyLjg1NEM0ODguMDUzIDEzNS4wNTQgNDg0LjY4NiAxMzYuMTU0IDQ4MC4xNTMgMTM2LjE1NEg0NjYuNDUzVjEyMi44NTRINDc5LjY1M0w0ODQuMzU0IDExMS42NTRMNDU4LjQ1MyA1Mi4xNTQzSDQ3Ni4wNTNMNDkyLjg1NCA5Mi41NTQ3Wk01MzUuNDE4IDExMy41OUg1MTguMzgzVjk1LjcwN0g1MzUuNDE4VjExMy41OVpNMjM4LjkzOCAyOS45NTUxQzI0OC44NzEgMjkuOTU1MSAyNTYuODcxIDMyLjE4ODYgMjYyLjkzOCAzNi42NTUzQzI2OS4wMDQgNDEuMTIxOSAyNzIuNDA0IDQ3LjM1NTUgMjczLjEzOCA1NS4zNTU1SDI1NS43MzdDMjUzLjgwNCA0Ny4yMjIxIDI0Ny45MDQgNDMuMTU1MyAyMzguMDM3IDQzLjE1NTNDMjMzLjU3MSA0My4xNTUzIDIzMC4wNyA0My45NTQ3IDIyNy41MzcgNDUuNTU0N0MyMjUuMDA0IDQ3LjE1NDcgMjIzLjczNyA0OS40NTUxIDIyMy43MzcgNTIuNDU1MUMyMjMuNzM3IDU3LjA1NTEgMjI3LjAzOCA2MC4wMjIxIDIzMy42MzggNjEuMzU1NUwyNTEuMDM3IDY0Ljk1NTFDMjU4LjkwNCA2Ni41NTUgMjY0LjYzNyA2OS4yNTQ4IDI2OC4yMzcgNzMuMDU0N0MyNzEuOTA0IDc2Ljc4OCAyNzMuNzM3IDgxLjg1NSAyNzMuNzM3IDg4LjI1NDlDMjczLjczNyA5Ni4xODgyIDI3MC44MzcgMTAyLjM1NSAyNjUuMDM3IDEwNi43NTVDMjU5LjMwNCAxMTEuMTU1IDI1MS4xMzcgMTEzLjM1NSAyNDAuNTM3IDExMy4zNTVDMjI5LjY3MSAxMTMuMzU1IDIyMS4wMDQgMTEwLjk4OCAyMTQuNTM3IDEwNi4yNTVDMjA4LjA3MSAxMDEuNDU1IDIwNC41MzggOTQuODIxOCAyMDMuOTM4IDg2LjM1NTVIMjIxLjMzOEMyMjEuOTM4IDkwLjc1NTMgMjIzLjkwNCA5NC4wODg5IDIyNy4yMzcgOTYuMzU1NUMyMzAuNjM3IDk4LjU1NTQgMjM1LjMwNCA5OS42NTUyIDI0MS4yMzcgOTkuNjU1M0MyNDYuNTA0IDk5LjY1NTMgMjUwLjQ3MSA5OC44MjE5IDI1My4xMzggOTcuMTU1M0MyNTUuODA0IDk1LjQyMTkgMjU3LjEzOCA5Mi44ODggMjU3LjEzOCA4OS41NTQ3QzI1Ny4xMzggODYuOTU0OSAyNTYuMjcgODQuODg4NyAyNTQuNTM3IDgzLjM1NTVDMjUyLjg3MSA4MS44MjIyIDI1MC4xMzggODAuNjU1NSAyNDYuMzM4IDc5Ljg1NTVMMjI5LjYzOCA3Ni40NTUxQzIyMi4xMDQgNzQuODU1MSAyMTYuNDcxIDcyLjIyMTQgMjEyLjczNyA2OC41NTQ3QzIwOS4wMDQgNjQuODIxNCAyMDcuMTM4IDU5Ljk4NzkgMjA3LjEzOCA1NC4wNTQ3QzIwNy4xMzggNDYuNTIxNiAyMDkuOTcxIDQwLjYyMjEgMjE1LjYzOCAzNi4zNTU1QzIyMS4zNzEgMzIuMDg4OCAyMjkuMTM3IDI5Ljk1NTEgMjM4LjkzOCAyOS45NTUxWk0zMTAuNjE1IDUwLjk1NTFDMzE5LjU0OSA1MC45NTUxIDMyNi4zNDkgNTIuOTU1MSAzMzEuMDE2IDU2Ljk1NTFDMzM1Ljc0OSA2MC45NTUxIDMzOC4xMTUgNjYuNzg4NCAzMzguMTE1IDc0LjQ1NTFWOTUuNzU0OUgzNDUuOTE2VjExMi4xNTVIMzI5LjExNVYxMDIuMzU1SDMyNC45MTZDMzIyLjg0OSAxMDUuODIyIDMyMC4wODIgMTA4LjUyMiAzMTYuNjE1IDExMC40NTVDMzEzLjE0OSAxMTIuMzIyIDMwOC44MTUgMTEzLjI1NSAzMDMuNjE1IDExMy4yNTVDMjk2LjU0OSAxMTMuMjU1IDI5MS4wMTYgMTExLjU1NSAyODcuMDE2IDEwOC4xNTVDMjgzLjAxNiAxMDQuNjg5IDI4MS4wMTYgMTAwLjE1NSAyODEuMDE2IDk0LjU1NDdDMjgxLjAxNiA4OC42MjE2IDI4My4wODMgODQuMDU1NCAyODcuMjE2IDgwLjg1NTVDMjkxLjM0OSA3Ny42NTU1IDI5Ny4yODIgNzYuMDU0NyAzMDUuMDE2IDc2LjA1NDdIMzIyLjIxNlY3My43NTQ5QzMyMi4yMTYgNjcuMjg4MyAzMTguMzQ4IDY0LjA1NDcgMzEwLjYxNSA2NC4wNTQ3QzMwMy44ODIgNjQuMDU0OCAyOTkuODE2IDY2LjM4ODQgMjk4LjQxNiA3MS4wNTQ3SDI4MS45MTZDMjgzLjI0OSA2NC40NTQ5IDI4Ni4zNDkgNTkuNDU0NiAyOTEuMjE2IDU2LjA1NDdDMjk2LjA4MiA1Mi42NTQ5IDMwMi41NDkgNTAuOTU1MSAzMTAuNjE1IDUwLjk1NTFaTTM3MS4zMzQgODUuNDU0MUMzNzEuMzM0IDg5Ljc4NzQgMzcyLjQzNSA5My4wNTM5IDM3NC42MzUgOTUuMjUzOUMzNzYuOTAxIDk3LjM4NzIgMzgwLjI2OCA5OC40NTQxIDM4NC43MzQgOTguNDU0MUMzODkuMzM0IDk4LjQ1NDEgMzkyLjg2NyA5Ny4yODc0IDM5NS4zMzQgOTQuOTU0MUMzOTcuODY3IDkyLjYyMDggMzk5LjEzNSA4OS4yODc0IDM5OS4xMzUgODQuOTU0MVY1Mi4xNTQzSDQxNS43MzRWOTUuNzUzOUg0MjMuOTM1VjExMi4xNTRINDA3LjEzNVYxMDIuMzU0SDQwMi45MzVDNDAwLjUzNSAxMDUuODg4IDM5Ny42MDEgMTA4LjU4NyAzOTQuMTM1IDExMC40NTRDMzkwLjczNSAxMTIuMzIxIDM4Ni4yMzUgMTEzLjI1NCAzODAuNjM1IDExMy4yNTRDMzcyLjMwMSAxMTMuMjU0IDM2NS45MDEgMTExLjA1NCAzNjEuNDM1IDEwNi42NTRDMzU2Ljk2OCAxMDIuMjU0IDM1NC43MzQgOTYuMjU0MyAzNTQuNzM0IDg4LjY1NDNWNTIuMTU0M0gzNzEuMzM0Vjg1LjQ1NDFaTTQ1MC45OTggMTEyLjE1NEg0MzQuMzk4VjI4LjE1NDNINDUwLjk5OFYxMTIuMTU0Wk0zMDUuODE1IDg3LjA1NDdDMjk5LjgxNiA4Ny4wNTQ3IDI5Ni44MTYgODkuMjg4NCAyOTYuODE1IDkzLjc1NDlDMjk2LjgxNSA5NS45NTQ5IDI5Ny42NDkgOTcuNjU1NSAyOTkuMzE1IDk4Ljg1NTVDMzAwLjk4MiAxMDAuMDU1IDMwMy4yNDkgMTAwLjY1NSAzMDYuMTE1IDEwMC42NTVDMzA5LjI0OSAxMDAuNjU1IDMxMi4wMTYgMTAwLjA4OCAzMTQuNDE2IDk4Ljk1NTFDMzE2LjgxNiA5Ny44MjE4IDMxOC43MTUgOTYuMzIxNiAzMjAuMTE1IDk0LjQ1NTFDMzIxLjUxNSA5Mi41MjE3IDMyMi4yMTYgOTAuMzU1MSAzMjIuMjE2IDg3Ljk1NTFWODcuMDU0N0gzMDUuODE1WiIgZmlsbD0iYmxhY2siPjwvcGF0aD4KPGRlZnM+CjxsaW5lYXJHcmFkaWVudCBpZD0icGFpbnQwX2xpbmVhcl8yODM0Xzc3MzciIHgxPSI1MC4wNDAyIiB5MT0iLTYuNjYwMTYiIHgyPSI4Ni45Njk3IiB5Mj0iMTY0LjMwOSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjQ0M0NUI2Ij48L3N0b3A+CjxzdG9wIG9mZnNldD0iMC4zNTU3NjkiIHN0b3AtY29sb3I9IiNDQ0FERkYiPjwvc3RvcD4KPHN0b3Agb2Zmc2V0PSIwLjY3MzA3NyIgc3RvcC1jb2xvcj0iI0REOTVENyI+PC9zdG9wPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM2MDNGRDkiPjwvc3RvcD4KPC9saW5lYXJHcmFkaWVudD4KPC9kZWZzPgo8L3N2Zz4=" alt="Sauly" style="height:26px;width:auto;">'))
+      + "</div>" +
+      '<div class="sidebar-nav">' +
+      UI.NavItem({ icon: "home", label: "Dashboard", active: s.view === "dashboard", click: "goToDashboard", collapsed }) +
+      UI.NavItem({ icon: "briefcase", label: "Meetings", active: s.view === "list", click: "goToMeetingsNav", collapsed }) +
+      "</div>" +
+      '<div class="sidebar-spacer"></div>' +
+      '<div class="sidebar-collapse-row" style="justify-content:' + (collapsed ? "center" : "flex-end") + ';">' +
+      UI.IconButton({ iconName: collapsed ? "chevronRight" : "chevronLeft", ariaLabel: "Toggle sidebar", hierarchy: "secondary", size: "sm", click: "toggleSidebar" }) +
+      "</div>" +
+      '<div class="sidebar-footer">' +
+      UI.NavItem({ icon: "gear", label: "Settings", active: s.view === "settings", click: "goToSettings", collapsed }) +
+      "</div>" +
+      "</aside>"
+    );
+  }
+
+  // ── Topbar ────────────────────────────────────────────────────────
+  function Topbar(s) {
+    return (
+      '<div class="topbar">' +
+      (s.view === "detail" ? UI.Breadcrumb([{ label: "Meetings", click: "backToList" }, { label: (s.meetings.find((m) => m.id === s.activeId) || {}).title || "" }]) : "") +
+      '<div style="flex:1;"></div>' +
+      UI.IconButton({ iconName: s.theme === "dark" ? "sun" : "moon", ariaLabel: "Toggle theme", hierarchy: "secondary", click: "toggleTheme" }) +
+      "</div>"
+    );
+  }
+
+  // ── Dashboard ─────────────────────────────────────────────────────
+  function statusCard(s) {
+    if (s.liveActive) {
+      const elapsed = D.fmtDuration(s.liveElapsed).slice(3);
+      return (
+        '<div class="card status-card">' +
+        '<div style="display:flex;align-items:center;gap:14px;">' +
+        '<span class="live-dot"></span>' +
+        '<div><div style="font-weight:600;font-size:15px;">Recording live — DevOps Engineer — Technical Screen</div>' +
+        '<div style="font-size:13px;color:var(--text-tertiary);">Ridgeline Systems · Google Meet · ' + elapsed + " elapsed</div></div>" +
+        "</div>" +
+        UI.Button({ hierarchy: "secondary", destructive: true, click: "endLiveSession", label: "End session" }) +
+        "</div>"
+      );
+    }
+    return (
+      '<div class="card status-card">' +
+      '<div style="display:flex;align-items:center;gap:14px;">' +
+      UI.FeaturedIcon({ icon: "briefcase" }) +
+      '<div><div style="font-weight:600;font-size:15px;">No active recording</div>' +
+      '<div style="font-size:13px;color:var(--text-tertiary);">Saul picks up calls automatically on Zoom, Teams and Google Meet.</div></div>' +
+      "</div>" +
+      '<div style="display:flex;align-items:center;gap:10px;">' +
+      UI.Button({ hierarchy: "primary", click: "openUploadModal", iconLeft: "import", label: "Upload audio file" }) +
+      UI.Button({ hierarchy: "secondary", click: "startLiveSession", label: "Simulate incoming call" }) +
+      "</div>" +
+      "</div>"
+    );
+  }
+
+  function statCard(icon, label, value, caption) {
+    return (
+      '<div class="card stat-card">' +
+      '<div class="row1"><span class="label">' + esc(label) + "</span>" +
+      '<span class="icon-wrap">' + ICON(icon, 18) + "</span></div>" +
+      '<div class="value">' + esc(value) + "</div>" +
+      '<div class="caption">' + esc(caption) + "</div>" +
+      "</div>"
+    );
+  }
+
+  function DashboardView(s) {
+    const totalCount = s.meetings.length;
+    const openActionItems = s.meetings.reduce((acc, m) => acc + m.actionItems.filter((a) => !a.done).length, 0);
+    const totalSeconds = s.meetings.reduce((acc, m) => acc + D.durationToSeconds(m.duration), 0);
+    const avgSeconds = Math.round(totalSeconds / (s.meetings.length || 1));
+    return (
+      '<div class="page">' +
+      '<div><h1 class="page-title">Dashboard</h1><p class="page-sub">Your job-search activity at a glance.</p></div>' +
+      statusCard(s) +
+      '<div class="stat-grid">' +
+      statCard("briefcase", "Meetings logged", String(totalCount), "Since Jun 15") +
+      statCard("clipboard", "Open action items", String(openActionItems), "Across all calls") +
+      statCard("chartSquare", "Avg. call length", D.fmtDuration(avgSeconds), "Per meeting") +
+      "</div>" +
+      "</div>"
+    );
+  }
+
+  // ── Meetings list ─────────────────────────────────────────────────
+  function platformIconImg(platform, size) {
+    const meta = D.PLATFORM_META[platform];
+    size = size || 16;
+    return '<img src="' + meta.icon + '" width="' + size + '" height="' + size + '" alt="" style="flex-shrink:0;display:block;">';
+  }
+
+  function highlightsList(store, highlights, ordered) {
+    const tag = ordered ? "ol" : "ul";
+    return (
+      "<" + tag + ' class="highlights-list' + (ordered ? "" : " bullet") + '">' +
+      highlights.map((h, i) => '<li data-key="hl-' + i + '">' + store.highlightMatch(h) + "</li>").join("") +
+      "</" + tag + ">"
+    );
+  }
+
+  function actionItemsBlock(store, meetingId, actionItems, newItemValue) {
+    return (
+      '<div style="display:flex;flex-direction:column;gap:10px;">' +
+      actionItems
+        .map((item) => {
+          const ai = store.buildActionItem(meetingId, item);
+          if (ai.isEditing) {
+            return (
+              '<div class="action-item" data-key="ai-' + item.id + '">' +
+              UI.Checkbox({ checked: item.done, click: "toggleActionItem", args: [meetingId, item.id] }) +
+              '<div class="action-item-edit-row">' +
+              '<input class="text-input" style="flex:1;" value="' + esc(ai.editValue) + '" data-input="setEditDraft" data-keydown="editDraftKeydown" autofocus />' +
+              UI.IconButton({ iconName: "check", ariaLabel: "Save", hierarchy: "primary", size: "sm", click: "saveEdit" }) +
+              "</div></div>"
+            );
+          }
+          return (
+            '<div class="action-item" data-key="ai-' + item.id + '">' +
+            UI.Checkbox({ checked: item.done, click: "toggleActionItem", args: [meetingId, item.id] }) +
+            '<div class="txt' + (item.done ? " done" : "") + '"' + act("click", "startEdit", [meetingId, item.id]) + ">" + esc(item.text) + "</div>" +
+            UI.IconButton({ iconName: "close", iconSize: 14, ariaLabel: "Remove", hierarchy: "tertiary", size: "sm", click: "removeActionItem", args: [meetingId, item.id] }) +
+            "</div>"
+          );
+        })
+        .join("") +
+      '<div class="new-item-row">' +
+      '<input placeholder="Add an action item…" value="' + esc(newItemValue) + '" data-input="setNewItemDraft" data-keydown="newItemKeydown|' + esc(meetingId) + '" />' +
+      UI.IconButton({ iconName: "plus", ariaLabel: "Add", hierarchy: "secondary", size: "sm", click: "addActionItem", args: [meetingId] }) +
+      "</div></div>"
+    );
+  }
+
+  function commentsBlock(meeting, sizeClass) {
+    return (
+      '<div class="comments-block">' +
+      '<div class="col-heading" style="margin-bottom:6px;">' + ICON("edit", 18) + '<span class="label">Comments</span></div>' +
+      '<div class="fmt-toolbar">' +
+      '<button type="button" class="fmt-btn b" aria-label="Bold" data-mousedown="preventFocusSteal" data-click="applyFormat|bold">B</button>' +
+      '<button type="button" class="fmt-btn i" aria-label="Italic" data-mousedown="preventFocusSteal" data-click="applyFormat|italic">I</button>' +
+      '<button type="button" class="fmt-btn" aria-label="Bulleted list" data-mousedown="preventFocusSteal" data-click="applyFormat|bullet">•</button>' +
+      '<button type="button" class="fmt-btn" aria-label="Numbered list" data-mousedown="preventFocusSteal" data-click="applyFormat|numbered">1.</button>' +
+      "</div>" +
+      '<div class="comment-editor ' + (sizeClass || "") + '" data-meeting-id="' + esc(meeting.id) + '" role="textbox" aria-multiline="true" aria-label="Comments" contenteditable="true" data-input="commentsInput" data-placeholder="Notes you can add or remove anytime — just for your reference."></div>' +
+      "</div>"
+    );
+  }
+
+  function colHeading(icon, label, size) {
+    return '<div class="col-heading">' + ICON(icon, size || 20) + '<span class="label">' + esc(label) + "</span></div>";
+  }
+
+  function MeetingRow(store, m) {
+    const s = store.state;
+    const meta = D.PLATFORM_META[m.platform];
+    const isExpanded = s.expandedId === m.id;
+    return (
+      '<div class="mtg-row" data-key="row-' + m.id + '">' +
+      '<div class="mtg-row-main" role="button" tabindex="0" aria-expanded="' + (isExpanded ? "true" : "false") +
+      '"' + act("click", "toggleExpand", [m.id]) + act("keydown", "toggleExpandKey", [m.id]) + ">" +
+      '<div style="min-width:0;">' +
+      '<div class="mtg-title">' + store.highlightMatch(m.title) + "</div>" +
+      '<div class="mtg-company">' + store.highlightMatch(m.company) + "</div>" +
+      "</div>" +
+      '<span class="mtg-cell">' + esc(m.date) + "</span>" +
+      '<span class="mtg-duration">' + esc(m.duration) + "</span>" +
+      '<div class="mtg-platform">' + platformIconImg(m.platform) + '<span class="mtg-cell">' + esc(meta.label) + "</span></div>" +
+      '<div class="mtg-interviewer"><div style="min-width:0;">' +
+      '<div class="name">' + store.highlightMatch(m.interviewer.name) + "</div>" +
+      '<div class="email">' + esc(m.interviewer.email) + "</div></div></div>" +
+      UI.IconButton({ iconName: isExpanded ? "chevronUp" : "chevronDown", ariaLabel: "Toggle details", hierarchy: "tertiary", size: "sm", click: "toggleExpandStop", args: [m.id] }) +
+      "</div>" +
+      (isExpanded
+        ? '<div class="mtg-expanded">' +
+          '<div class="view-details-row">' +
+          UI.Button({ hierarchy: "secondary", size: "sm", click: "openDetailModal", args: [m.id], iconLeft: "fourArrows", label: "View details" }) +
+          "</div>" +
+          '<div class="mtg-expanded-cols">' +
+          "<div>" + colHeading("bookmark", "Key highlights", 22) + highlightsList(store, m.highlights, true) + "</div>" +
+          "<div>" + colHeading("clipboard", "Action items", 22) + actionItemsBlock(store, m.id, m.actionItems, s.expandedId === m.id ? s.newItemDraft : "") + "</div>" +
+          "<div>" + commentsBlock(m, "") + "</div>" +
+          "</div>" +
+          "</div>"
+        : "") +
+      "</div>"
+    );
+  }
+
+  function sortHeaderBtn(label, sortKey, s) {
+    const icon = s.sortKey === sortKey ? (s.sortDir === "desc" ? " ↓" : " ↑") : "";
+    return '<button type="button"' + act("click", "setSort", [sortKey]) + ">" + esc(label) + icon + "</button>";
+  }
+
+  function dateRangeLabel(s) {
+    return s.dateFrom || s.dateTo ? D.fmtShortDate(s.dateFrom) + " – " + D.fmtShortDate(s.dateTo) : "Date range";
+  }
+
+  function DateRangeControl(s) {
+    const open = s.isDateModalOpen;
+    return (
+      '<div style="position:relative;">' +
+      UI.Button({ hierarchy: "secondary", click: "toggleDateCard", iconLeft: "calendar", label: esc(dateRangeLabel(s)) }) +
+      (open
+        ? '<div class="date-popover-mask" data-click="closeDateModal"></div>' +
+          '<div class="date-popover">' +
+          '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">' +
+          '<div class="date-field"><label>From</label><input type="date"' + attrVal(isoDate(s.dateFrom)) + ' data-change="dateFromChange"></div>' +
+          '<div class="date-field"><label>To</label><input type="date"' + attrVal(isoDate(s.dateTo)) + ' data-change="dateToChange"></div>' +
+          "</div>" +
+          '<div style="display:flex;justify-content:space-between;gap:12px;">' +
+          UI.Button({ hierarchy: "tertiary", click: "clearDateRange", label: "Clear" }) +
+          UI.Button({ hierarchy: "primary", click: "closeDateModal", label: "Done" }) +
+          "</div></div>"
+        : "") +
+      "</div>"
+    );
+  }
+  function attrVal(v) { return v ? ' value="' + esc(v) + '"' : ""; }
+
+  function MeetingsListView(store) {
+    const s = store.state;
+    const rows = store.filteredSortedRows();
+    return (
+      '<div class="page">' +
+      '<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;">' +
+      '<div><h1 class="page-title">Meetings history</h1><p class="page-sub">Every call’s highlights and action items, captured automatically.</p></div>' +
+      UI.Button({ hierarchy: "primary", click: "openUploadModal", iconLeft: "plus", label: "Add meeting" }) +
+      "</div>" +
+      '<div class="toolbar">' +
+      '<div class="search-input-wrap">' + ICON("search", 16) +
+      '<input class="search-input" placeholder="Search meetings, companies, interviewers…" value="' + esc(s.query) + '" data-input="setQuery" /></div>' +
+      UI.SegmentedControl({
+        options: [{ value: "all", label: "All platforms" }, { value: "zoom", label: "Zoom" }, { value: "teams", label: "Teams" }, { value: "meet", label: "Google Meet" }],
+        value: s.platformFilter, onChange: "setPlatformFilter",
+      }) +
+      '<div style="flex:1;"></div>' +
+      DateRangeControl(s) +
+      "</div>" +
+      '<div style="display:flex;justify-content:flex-end;margin-top:-14px;"><span style="font-size:13px;color:var(--text-tertiary);">Showing ' + rows.length + " of " + s.meetings.length + " meetings</span></div>" +
+      (rows.length > 0
+        ? '<div class="mtg-table">' +
+          '<div class="mtg-head">' +
+          sortHeaderBtn("Meeting", "title", s) + sortHeaderBtn("Date", "date", s) + sortHeaderBtn("Duration", "duration", s) +
+          sortHeaderBtn("Platform", "platform", s) + sortHeaderBtn("Interviewer", "interviewer", s) + "<span></span>" +
+          "</div>" +
+          rows.map((m) => MeetingRow(store, m)).join("") +
+          "</div>" +
+          '<div style="display:flex;justify-content:flex-end;">' + UI.Pagination() + "</div>"
+        : UI.EmptyState({ icon: "briefcase", title: "No meetings match", description: "Try a different search term or clear the platform filter." })) +
+      "</div>"
+    );
+  }
+
+  // ── Detail modal (shared by list "View details" and upload flow) ──
+  function DetailModalBody(store, m) {
+    const s = store.state;
+    const meta = D.PLATFORM_META[m.platform];
+    const doneCount = m.actionItems.filter((a) => a.done).length;
+    const copied = s.copiedKey === m.id;
+    return (
+      '<div style="display:flex;flex-direction:column;gap:18px;height:520px;overflow-y:auto;padding-bottom:8px;padding-right:4px;">' +
+      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
+      '<span style="font-size:13px;color:var(--text-tertiary);white-space:nowrap;">' + esc(m.date) + " at " + esc(m.time) + "</span>" +
+      '<span style="color:var(--border-strong);">•</span>' +
+      '<span style="font-family:var(--font-mono);font-size:12.5px;color:var(--text-tertiary);white-space:nowrap;">' + esc(m.duration) + "</span>" +
+      '<div style="display:flex;align-items:center;gap:6px;">' + platformIconImg(m.platform) + '<span class="mtg-cell">' + esc(meta.label) + "</span></div>" +
+      '<div style="flex:1;min-width:12px;"></div>' +
+      UI.Button({ hierarchy: "secondary", size: "sm", click: "copySummary", args: [m.id], label: copied ? "Copied!" : "Copy summary" }) +
+      "</div>" +
+      UI.Tabs({ tabs: [{ value: "overview", label: "Overview" }, { value: "transcript", label: "Transcript" }], value: s.detailTab, onChange: "setDetailTab" }) +
+      (s.detailTab === "overview"
+        ? '<div>' + colHeading("bookmark", "Key highlights", 22) + highlightsList(store, m.highlights, true) + "</div>"
+        : m.transcript.length
+        ? '<div style="display:flex;flex-direction:column;gap:14px;">' +
+          m.transcript.map((t, i) =>
+            '<div style="display:flex;gap:14px;" data-key="tl-' + i + '">' +
+            '<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-placeholder);width:44px;flex-shrink:0;padding-top:2px;">' + esc(t.time) + "</span>" +
+            '<div><div style="font-size:12.5px;font-weight:600;color:var(--text-tertiary);margin-bottom:2px;">' + esc(t.speaker) + "</div>" +
+            '<div style="font-size:13.5px;line-height:20px;color:var(--text-secondary);">' + esc(t.text) + "</div></div></div>"
+          ).join("") +
+          "</div>"
+        : UI.EmptyState({ icon: "clipboard", title: "No transcript captured", description: "This call wasn't recorded, so only the summary is available." })) +
+      "<div>" +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
+      colHeading("clipboard", "Action items", 22) +
+      '<span style="font-size:12px;color:var(--text-tertiary);">' + doneCount + "/" + m.actionItems.length + " done</span></div>" +
+      actionItemsBlock(store, m.id, m.actionItems, s.newItemDraft) +
+      "</div>" +
+      commentsBlock(m, "modal-size") +
+      "</div>"
+    );
+  }
+
+  function DetailModal(store) {
+    const s = store.state;
+    if (!s.isDetailModalOpen) return "";
+    const m = s.meetings.find((x) => x.id === s.detailModalId);
+    if (!m) return "";
+    return UI.Modal({ open: true, id: "detail", title: m.title, description: m.company, width: 720, bodyHtml: DetailModalBody(store, m) });
+  }
+
+  // ── Upload modal ───────────────────────────────────────────────────
+  function UploadModal(store) {
+    const s = store.state;
+    if (!s.uploadModalOpen) return "";
+    const platformOpts = [{ value: "zoom", label: "Zoom" }, { value: "teams", label: "Microsoft Teams" }, { value: "meet", label: "Google Meet" }];
+    const cannotSubmit = !s.uploadFileName || s.uploadStatus === "processing";
+    const body =
+      '<div style="display:flex;flex-direction:column;gap:16px;">' +
+      UI.Dropzone({ fileName: s.uploadFileName }) +
+      '<div class="form-field"><label>Meeting title</label>' +
+      '<input type="text" value="' + esc(s.uploadTitle) + '" placeholder="e.g. Frontend Engineer — Screen" data-input="uploadTitleInput" /></div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+      '<div class="form-field"><label>Company</label><input type="text" value="' + esc(s.uploadCompany) + '" placeholder="Optional" data-input="uploadCompanyInput" /></div>' +
+      '<div class="form-field"><label>Platform</label>' + UI.Select({ fieldKey: "uploadPlatform", options: platformOpts, value: s.uploadPlatform, open: s.openSelect === "uploadPlatform", onChange: "chooseUploadPlatform" }) + "</div>" +
+      "</div>" +
+      '<div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:6px;">' +
+      UI.Button({ hierarchy: "secondary", click: "closeUploadModal", label: "Cancel" }) +
+      UI.Button({ hierarchy: "primary", disabled: cannotSubmit, click: "submitUpload", label: s.uploadStatus === "processing" ? "Transcribing…" : "Transcribe & add" }) +
+      "</div>" +
+      (s.uploadStatus === "processing" ? '<div style="font-size:12.5px;color:var(--text-tertiary);text-align:right;margin-top:-6px;">Transcribing audio and generating summary…</div>' : "") +
+      "</div>";
+    return UI.Modal({ open: true, id: "upload", icon: "import", title: "Upload audio file", description: "Import a recording to transcribe and summarize.", width: 480, bodyHtml: body });
+  }
+
+  // ── Settings ─────────────────────────────────────────────────────
+  const SETTINGS_NAV = [
+    { id: "general", label: "General", icon: "gearHex" },
+    { id: "recording", label: "Recording", icon: "mic" },
+    { id: "transcription", label: "Transcription", icon: "document" },
+    { id: "summary", label: "Summary", icon: "note" },
+    { id: "connectors", label: "Connectors", icon: "plug" },
+    { id: "beta", label: "Beta", icon: "flask" },
+  ];
+
+  function settingsRow(title, desc, controlHtml) {
+    return '<div class="settings-row"><div><div class="row-title">' + esc(title) + '</div>' + (desc ? '<div class="row-desc">' + esc(desc) + "</div>" : "") + "</div>" + controlHtml + "</div>";
+  }
+
+  function GeneralSection(s) {
+    return (
+      '<div class="card settings-card"><div class="settings-card-title">Appearance</div>' +
+      settingsRow("Theme", "Switch between light and dark.", UI.SegmentedControl({ options: [{ value: "light", label: "Light" }, { value: "dark", label: "Dark" }], value: s.theme, onChange: "setTheme" })) +
+      "</div>" +
+      '<div class="card settings-card"><div class="settings-card-title">Data &amp; privacy</div>' +
+      '<div class="settings-row" style="display:block;">' +
+      '<div class="row-title">Data storage location</div><div class="row-desc" style="margin-bottom:10px;">Where recordings and transcripts are saved on this device.</div>' +
+      '<div class="storage-row"><input value="' + esc(s.settings.dataStorage) + '" spellcheck="false" data-input="settingsInput|dataStorage" />' +
+      UI.Button({ hierarchy: "secondary", label: "Browse…" }) + "</div></div>" +
+      settingsRow("Usage analytics", "Share anonymous usage data to help improve Sauly.", UI.Toggle({ checked: s.settings.usageAnalytics, click: "toggleSetting", args: ["usageAnalytics"] })) +
+      "</div>"
+    );
+  }
+
+  function RecordingSection(s) {
+    return (
+      '<div class="card settings-card"><div class="settings-card-title">Capture</div>' +
+      settingsRow("Save recorded audio files", "Keep the raw audio after transcription completes.", UI.Toggle({ checked: s.settings.saveAudioFiles, click: "toggleSetting", args: ["saveAudioFiles"] })) +
+      settingsRow("Recording format", "Container and codec for saved audio.", UI.Select({ fieldKey: "recordingFormat", options: D.RECORDING_FORMATS, value: s.settings.recordingFormat, open: s.openSelect === "recordingFormat", onChange: "selectSetting" })) +
+      settingsRow("Recording start notification", "Show a system notification when capture begins.", UI.Toggle({ checked: s.settings.recordingStartNotification, click: "toggleSetting", args: ["recordingStartNotification"] })) +
+      "</div>" +
+      '<div class="card settings-card"><div class="settings-card-title">Meeting auto-detect</div>' +
+      settingsRow("Auto-detect meetings", "Start recording automatically when a call is detected.", UI.Toggle({ checked: s.settings.meetingAutoDetect, click: "toggleSetting", args: ["meetingAutoDetect"] })) +
+      '<div class="settings-row" style="display:block;">' +
+      '<div class="row-title">Detect on these platforms</div><div class="row-desc" style="margin-bottom:12px;">Which apps Sauly watches for an active meeting.</div>' +
+      '<div class="checkbox-group">' +
+      UI.Checkbox({ checked: s.settings.autoDetectZoom, click: "toggleSetting", args: ["autoDetectZoom"], label: "Zoom" }) +
+      UI.Checkbox({ checked: s.settings.autoDetectTeams, click: "toggleSetting", args: ["autoDetectTeams"], label: "Microsoft Teams" }) +
+      UI.Checkbox({ checked: s.settings.autoDetectMeet, click: "toggleSetting", args: ["autoDetectMeet"], label: "Google Meet" }) +
+      "</div></div></div>" +
+      '<div class="card settings-card"><div class="settings-card-title">Audio devices</div>' +
+      settingsRow("Microphone", "", UI.Select({ fieldKey: "micDevice", options: D.MIC_DEVICES, value: s.settings.micDevice, open: s.openSelect === "micDevice", onChange: "selectSetting" })) +
+      settingsRow("System audio", "", UI.Select({ fieldKey: "systemAudioDevice", options: D.SYSTEM_AUDIO_DEVICES, value: s.settings.systemAudioDevice, open: s.openSelect === "systemAudioDevice", onChange: "selectSetting" })) +
+      settingsRow("System audio backend", "", UI.Select({ fieldKey: "systemAudioBackend", options: D.SYSTEM_AUDIO_BACKENDS, value: s.settings.systemAudioBackend, open: s.openSelect === "systemAudioBackend", onChange: "selectSetting" })) +
+      "</div>"
+    );
+  }
+
+  function TranscriptionSection(s) {
+    const variants = (D.TRANSCRIPTION_MODELS.find((m) => m.value === s.settings.transcriptionModel) || D.TRANSCRIPTION_MODELS[0]).variants;
+    return (
+      '<div class="card settings-card">' +
+      '<div class="settings-card-title">Transcription model</div><p class="settings-card-desc">Runs on-device. Larger variants are more accurate but slower.</p>' +
+      settingsRow("Model", "", UI.Select({ fieldKey: "transcriptionModel", options: D.TRANSCRIPTION_MODELS, value: s.settings.transcriptionModel, open: s.openSelect === "transcriptionModel", onChange: "chooseTranscriptionModel" })) +
+      settingsRow("Variant", "", UI.Select({ fieldKey: "transcriptionVariant", options: variants, value: s.settings.transcriptionVariant, open: s.openSelect === "transcriptionVariant", onChange: "selectSetting" })) +
+      "</div>"
+    );
+  }
+
+  function SummarySection(s) {
+    const variants = (D.SUMMARY_MODELS.find((m) => m.value === s.settings.summaryModel) || D.SUMMARY_MODELS[0]).variants;
+    const isLocal = (D.SUMMARY_MODELS.find((m) => m.value === s.settings.summaryModel) || {}).local === true;
+    return (
+      '<div class="card settings-card"><div class="settings-card-title">Summaries</div>' +
+      settingsRow("Auto summary", "Generate a summary automatically when a meeting ends.", UI.Toggle({ checked: s.settings.autoSummary, click: "toggleSetting", args: ["autoSummary"] })) +
+      "</div>" +
+      '<div class="card settings-card">' +
+      '<div class="settings-card-title">Summary language</div>' +
+      '<p class="settings-card-desc">Pin one language as the default for new meetings. Unpinned languages stay as quick-switch options in the summary generator.</p>' +
+      '<div style="margin-top:6px;">' +
+      D.SUMMARY_LANGUAGES.map((l) => {
+        const isDefault = s.settings.summaryDefaultLang === l.value;
+        return (
+          '<div class="lang-row" data-key="lang-' + l.value + '"><span style="font-size:14px;">' + esc(l.label) + "</span>" +
+          '<button type="button" class="pin-btn' + (isDefault ? " default" : "") + '"' + act("click", "pinSummaryLang", [l.value]) + ">" + (isDefault ? "Default" : "Set default") + "</button></div>"
+        );
+      }).join("") +
+      "</div></div>" +
+      '<div class="card settings-card"><div class="settings-card-title">Summary model</div>' +
+      settingsRow("Model", "", UI.Select({ fieldKey: "summaryModel", options: D.SUMMARY_MODELS, value: s.settings.summaryModel, open: s.openSelect === "summaryModel", onChange: "chooseSummaryModel" })) +
+      '<div class="settings-row"><div class="row-title">Variant</div><div style="display:flex;align-items:center;gap:10px;">' +
+      UI.Select({ fieldKey: "summaryVariant", options: variants, value: s.settings.summaryVariant, open: s.openSelect === "summaryVariant", onChange: "selectSetting", style: "min-width:200px;" }) +
+      (isLocal ? UI.Button({ hierarchy: "secondary", iconLeft: "import", label: "Download" }) : "") +
+      "</div></div></div>"
+    );
+  }
+
+  function ConnectorsSection(s) {
+    const items = [
+      { id: "google", name: "Google Calendar", icon: "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIj8+Cgo8c3ZnIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDMyIDMyIiBkYXRhLW5hbWU9IkxheWVyIDEiIGlkPSJMYXllcl8xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Ik0yNCwyMS40NVYyNWEyLjAwNTksMi4wMDU5LDAsMCwxLTIsMkg5VjIxaDlWMTZaIiBmaWxsPSIjMDBhYzQ3Ij48L3BhdGg+PHBvbHlnb24gZmlsbD0iIzMxYTk1MCIgcG9pbnRzPSIyNCAxMSAyNCAyMS40NSAxOCAxNiAxOCAxMSAyNCAxMSI+PC9wb2x5Z29uPjxwb2x5Z29uIGZpbGw9IiNlYTQ0MzUiIHBvaW50cz0iOSA1IDkgMTEgMyAxMSA5IDUiPjwvcG9seWdvbj48cmVjdCBmaWxsPSIjNDI4NWY0IiBoZWlnaHQ9IjExIiB3aWR0aD0iNiIgeD0iMyIgeT0iMTEiPjwvcmVjdD48cGF0aCBkPSJNMjQsN3Y0aC0uNUwxOCwxNlYxMUg5VjVIMjJBMi4wMDU5LDIuMDA1OSwwLDAsMSwyNCw3WiIgZmlsbD0iI2ZmYmEwMCI+PC9wYXRoPjxwYXRoIGQ9Ik05LDIxdjZINWEyLjAwNTksMi4wMDU5LDAsMCwxLTItMlYyMVoiIGZpbGw9IiMwMDY2ZGEiPjwvcGF0aD48cGF0aCBkPSJNMjksOC4yNlYyMy43NGEuOTk4OS45OTg5LDAsMCwxLTEuNjcuNzRMMjQsMjEuNDUsMTgsMTZsNS41LTUsLjUtLjQ1LDMuMzMtMy4wM0EuOTk4OS45OTg5LDAsMCwxLDI5LDguMjZaIiBmaWxsPSIjMDBhYzQ3Ij48L3BhdGg+PHBvbHlnb24gZmlsbD0iIzE4ODAzOCIgcG9pbnRzPSIyNCAxMC41NSAyNCAyMS40NSAxOCAxNiAyMy41IDExIDI0IDEwLjU1Ij48L3BvbHlnb24+PC9zdmc+" },
+      { id: "zoom", name: "Zoom Calendar", icon: "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIj8+Cgo8c3ZnIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDMyIDMyIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMiAxMS42QzIgOC4yMzk2OSAyIDYuNTU5NTMgMi42NTM5NiA1LjI3NjA2QzMuMjI5MiA0LjE0NzA4IDQuMTQ3MDggMy4yMjkyIDUuMjc2MDYgMi42NTM5NkM2LjU1OTUzIDIgOC4yMzk2OSAyIDExLjYgMkgyMC40QzIzLjc2MDMgMiAyNS40NDA1IDIgMjYuNzIzOSAyLjY1Mzk2QzI3Ljg1MjkgMy4yMjkyIDI4Ljc3MDggNC4xNDcwOCAyOS4zNDYgNS4yNzYwNkMzMCA2LjU1OTUzIDMwIDguMjM5NjkgMzAgMTEuNlYyMC40QzMwIDIzLjc2MDMgMzAgMjUuNDQwNSAyOS4zNDYgMjYuNzIzOUMyOC43NzA4IDI3Ljg1MjkgMjcuODUyOSAyOC43NzA4IDI2LjcyMzkgMjkuMzQ2QzI1LjQ0MDUgMzAgMjMuNzYwMyAzMCAyMC40IDMwSDExLjZDOC4yMzk2OSAzMCA2LjU1OTUzIDMwIDUuMjc2MDYgMjkuMzQ2QzQuMTQ3MDggMjguNzcwOCAzLjIyOTIgMjcuODUyOSAyLjY1Mzk2IDI2LjcyMzlDMiAyNS40NDA1IDIgMjMuNzYwMyAyIDIwLjRWMTEuNloiIGZpbGw9IiM0MDg3RkMiPjwvcGF0aD4KPHBhdGggZD0iTTguMjY2NjcgMTBDNy41NjcxMSAxMCA3IDEwLjYzOTYgNyAxMS40Mjg2VjE4LjM1NzFDNyAyMC4zNjkgOC40NDYxMiAyMiAxMC4yMyAyMkwxNy43MzMzIDIxLjkyODZDMTguNDMyOSAyMS45Mjg2IDE5IDIxLjI4OSAxOSAyMC41VjEzLjVDMTkgMTEuNDg4MSAxNy4yODM5IDEwIDE1LjUgMTBMOC4yNjY2NyAxMFoiIGZpbGw9IndoaXRlIj48L3BhdGg+CjxwYXRoIGQ9Ik0yMC43MTIyIDEyLjcyNzZDMjAuMjU5NiAxMy4xNzUyIDIwIDEzLjgyMTEgMjAgMTQuNVYxNy4zOTkzQzIwIDE4LjA3ODIgMjAuMjU5NiAxOC43MjQyIDIwLjcxMjIgMTkuMTcxN0wyMy41Mjg4IDIxLjY1MjVDMjQuMTAxOSAyMi4yMTkxIDI1IDIxLjc2MDEgMjUgMjAuOTAwNVYxMS4xMzUyQzI1IDEwLjI3NTUgMjQuMTAxOSA5LjgxNjU0IDIzLjUyODggMTAuMzgzMkwyMC43MTIyIDEyLjcyNzZaIiBmaWxsPSJ3aGl0ZSI+PC9wYXRoPgo8L3N2Zz4=" },
+      { id: "outlook", name: "Outlook Calendar", icon: "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIj8+Cgo8c3ZnIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDMyIDMyIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMTkgMTMuOTAzMkMxOSAxMy40MDQ0IDE5LjQwNDQgMTMgMTkuOTAzMiAxM0gzMS4wOTY4QzMxLjU5NTYgMTMgMzIgMTMuNDA0NCAzMiAxMy45MDMyVjIwLjVDMzIgMjQuMDg5OSAyOS4wODk5IDI3IDI1LjUgMjdDMjEuOTEwMSAyNyAxOSAyNC4wODk5IDE5IDIwLjVWMTMuOTAzMloiIGZpbGw9InVybCgjcGFpbnQwX2xpbmVhcl84N183Nzc3KSI+PC9wYXRoPgo8cGF0aCBkPSJNOSAxMi4yMjU4QzkgMTEuNTQ4OCA5LjU0ODgxIDExIDEwLjIyNTggMTFIMjMuNzc0MkMyNC40NTEyIDExIDI1IDExLjU0ODggMjUgMTIuMjI1OFYyMkMyNSAyNi40MTgzIDIxLjQxODMgMzAgMTcgMzBDMTIuNTgxNyAzMCA5IDI2LjQxODMgOSAyMlYxMi4yMjU4WiIgZmlsbD0idXJsKCNwYWludDFfbGluZWFyXzg3Xzc3NzcpIj48L3BhdGg+CjxjaXJjbGUgY3g9IjI3IiBjeT0iOCIgcj0iMyIgZmlsbD0iIzM0NDM5RSI+PC9jaXJjbGU+CjxjaXJjbGUgY3g9IjI3IiBjeT0iOCIgcj0iMyIgZmlsbD0idXJsKCNwYWludDJfbGluZWFyXzg3Xzc3NzcpIj48L2NpcmNsZT4KPGNpcmNsZSBjeD0iMTgiIGN5PSI2IiByPSI0IiBmaWxsPSJ1cmwoI3BhaW50M19saW5lYXJfODdfNzc3NykiPjwvY2lyY2xlPgo8bWFzayBpZD0ibWFzazBfODdfNzc3NyIgc3R5bGU9Im1hc2stdHlwZTphbHBoYSIgbWFza1VuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeD0iOSIgeT0iMCIgd2lkdGg9IjE2IiBoZWlnaHQ9IjMwIj4KPHBhdGggZD0iTTE3IDEwQzE5Ljc2MTUgMTAgMjIgNy43NjE0NyAyMiA1QzIyIDIuMjM4NTMgMTkuNzYxNSAwIDE3IDBDMTQuMjM4NSAwIDEyIDIuMjM4NTMgMTIgNUMxMiA3Ljc2MTQ3IDE0LjIzODUgMTAgMTcgMTBaIiBmaWxsPSJ1cmwoI3BhaW50NF9saW5lYXJfODdfNzc3NykiPjwvcGF0aD4KPHBhdGggZD0iTTEwLjIyNTggMTFDOS41NDg4MyAxMSA5IDExLjU0ODggOSAxMi4yMjU4VjIyQzkgMjYuNDE4MyAxMi41ODE3IDMwIDE3IDMwQzIxLjQxODMgMzAgMjUgMjYuNDE4MyAyNSAyMlYxMi4yMjU4QzI1IDExLjU0ODggMjQuNDUxMiAxMSAyMy43NzQyIDExSDEwLjIyNThaIiBmaWxsPSJ1cmwoI3BhaW50NV9saW5lYXJfODdfNzc3NykiPjwvcGF0aD4KPC9tYXNrPgo8ZyBtYXNrPSJ1cmwoI21hc2swXzg3Xzc3NzcpIj4KPHBhdGggZD0iTTcgMTJDNyAxMC4zNDMxIDguMzQzMTUgOSAxMCA5SDE3QzE4LjY1NjkgOSAyMCAxMC4zNDMxIDIwIDEyVjI0QzIwIDI1LjY1NjkgMTguNjU2OSAyNyAxNyAyN0g3VjEyWiIgZmlsbD0iIzAwMDAwMCIgZmlsbC1vcGFjaXR5PSIwLjMiPjwvcGF0aD4KPC9nPgo8cmVjdCB5PSI3IiB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHJ4PSIyIiBmaWxsPSJ1cmwoI3BhaW50Nl9saW5lYXJfODdfNzc3NykiPjwvcmVjdD4KPHBhdGggZD0iTTEzIDExSDVWMTIuODM0N0g3Ljk5NDk0VjIxSDEwLjAwNTFWMTIuODM0N0gxM1YxMVoiIGZpbGw9IndoaXRlIj48L3BhdGg+CjxkZWZzPgo8bGluZWFyR3JhZGllbnQgaWQ9InBhaW50MF9saW5lYXJfODdfNzc3NyIgeDE9IjE5IiB5MT0iMTMuNzM2OCIgeDI9IjMyLjE1OTEiIHkyPSIyMi4zMzU1IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiMzNjQwODgiPjwvc3RvcD4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjNkU3RUUxIj48L3N0b3A+CjwvbGluZWFyR3JhZGllbnQ+CjxsaW5lYXJHcmFkaWVudCBpZD0icGFpbnQxX2xpbmVhcl84N183Nzc3IiB4MT0iOSIgeTE9IjE5LjQwMzgiIHgyPSIyNSIgeTI9IjE5LjQwMzgiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KPHN0b3Agc3RvcC1jb2xvcj0iIzUxNUZDNCI+PC9zdG9wPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM3MDg0RUEiPjwvc3RvcD4KPC9saW5lYXJHcmFkaWVudD4KPGxpbmVhckdyYWRpZW50IGlkPSJwYWludDJfbGluZWFyXzg3Xzc3NzciIHgxPSIyNCIgeTE9IjUuMzE1NzkiIHgyPSIyOS43OTYzIiB5Mj0iOS4zOTQ2OSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjMzY0MDg4Ij48L3N0b3A+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzZFN0VFMSI+PC9zdG9wPgo8L2xpbmVhckdyYWRpZW50Pgo8bGluZWFyR3JhZGllbnQgaWQ9InBhaW50M19saW5lYXJfODdfNzc3NyIgeDE9IjE1LjE0MjkiIHkxPSIzLjE0Mjg2IiB4Mj0iMjAuMjg1NyIgeTI9IjkuMTQyODYiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KPHN0b3Agc3RvcC1jb2xvcj0iIzQ4NThBRSI+PC9zdG9wPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM0RTYwQ0UiPjwvc3RvcD4KPC9saW5lYXJHcmFkaWVudD4KPGxpbmVhckdyYWRpZW50IGlkPSJwYWludDRfbGluZWFyXzg3Xzc3NzciIHgxPSIxMy40Mjg2IiB5MT0iMS40Mjg1NyIgeDI9IjE5Ljg1NzEiIHkyPSI4LjkyODU3IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiM0ODU4QUUiPjwvc3RvcD4KPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjNEU2MENFIj48L3N0b3A+CjwvbGluZWFyR3JhZGllbnQ+CjxsaW5lYXJHcmFkaWVudCBpZD0icGFpbnQ1X2xpbmVhcl84N183Nzc3IiB4MT0iMTMuNDI4NiIgeTE9IjEuNDI4NTciIHgyPSIxOS44NTcxIiB5Mj0iOC45Mjg1NyIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjNDg1OEFFIj48L3N0b3A+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzRFNjBDRSI+PC9zdG9wPgo8L2xpbmVhckdyYWRpZW50Pgo8bGluZWFyR3JhZGllbnQgaWQ9InBhaW50Nl9saW5lYXJfODdfNzc3NyIgeDE9Ii01LjIxNTM5ZS0wOCIgeTE9IjE2IiB4Mj0iMTgiIHkyPSIxNiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjMkEzODg3Ij48L3N0b3A+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzRDNTZCOSI+PC9zdG9wPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPg==" },
+    ];
+    return (
+      '<div class="card settings-card">' +
+      '<div class="settings-card-title">Connectors</div><p class="settings-card-desc">Link a calendar so Sauly knows which meetings to join automatically.</p>' +
+      items.map((c) => {
+        const connected = s.connectors[c.id];
+        return (
+          '<div class="settings-conn-row" data-key="conn-' + c.id + '">' +
+          '<span class="conn-icon"><img src="' + c.icon + '" width="22" height="22" alt="" style="display:block;"></span>' +
+          '<div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:14px;">' + esc(c.name) + "</div>" +
+          '<div style="font-size:12.5px;color:var(--text-tertiary);">' + (connected ? "Connected — syncing meetings" : "Not connected") + "</div></div>" +
+          UI.Button({ hierarchy: connected ? "secondary" : "primary", destructive: connected, click: "toggleConnector", args: [c.id], label: connected ? "Disconnect" : "Connect" }) +
+          "</div>"
+        );
+      }).join("") +
+      "</div>"
+    );
+  }
+
+  function BetaSection(s) {
+    const feats = [
+      { id: "betaLiveSuggestions", name: "Live answer suggestions", desc: "Surface talking points in real time during a call. Rough around the edges." },
+      { id: "betaLocalDiarization", name: "On-device speaker diarization", desc: "Label who said what locally, without sending audio to the cloud." },
+      { id: "betaSmartClips", name: "Smart clips", desc: "Auto-cut short highlight clips from each recording." },
+    ];
+    return (
+      '<div class="card settings-card">' +
+      '<div style="display:flex;align-items:center;gap:8px;">' +
+      '<span class="settings-card-title">Experimental features</span>' + UI.Badge({ color: "violet", label: "Beta" }) + "</div>" +
+      '<p class="settings-card-desc">These are early and may change or break. Enable at your own risk.</p>' +
+      feats.map((f) => '<div data-key="beta-' + f.id + '">' + settingsRow(f.name, f.desc, UI.Toggle({ checked: s.settings[f.id], click: "toggleSetting", args: [f.id] })) + "</div>").join("") +
+      "</div>"
+    );
+  }
+
+  function SettingsView(s) {
+    const sectionMap = { general: GeneralSection, recording: RecordingSection, transcription: TranscriptionSection, summary: SummarySection, connectors: ConnectorsSection, beta: BetaSection };
+    return (
+      '<div class="page" style="padding-bottom:48px;max-width:980px;">' +
+      '<div><h1 class="page-title">Settings</h1><p class="page-sub">Configure recording, transcription, summaries and connected calendars.</p></div>' +
+      '<div class="settings-grid">' +
+      '<nav class="settings-nav">' +
+      SETTINGS_NAV.map((n) => '<button type="button" class="settings-nav-btn' + (s.settingsSection === n.id ? " active" : "") + '" data-key="snav-' + n.id + '"' + act("click", "setSettingsSection", [n.id]) + ">" + ICON(n.icon, 18) + esc(n.label) + "</button>").join("") +
+      "</nav>" +
+      '<div class="settings-section">' + sectionMap[s.settingsSection](s) + "</div>" +
+      "</div></div>"
+    );
+  }
+
+  // ── Root ────────────────────────────────────────────────────────
+  function Root(store) {
+    const s = store.state;
+    let content = "";
+    if (s.view === "dashboard") content = DashboardView(s);
+    else if (s.view === "settings") content = SettingsView(s);
+    else content = MeetingsListView(store);
+    return (
+      Sidebar(s) +
+      '<div style="flex:1;min-width:0;display:flex;flex-direction:column;">' +
+      Topbar(s) +
+      content +
+      "</div>" +
+      DetailModal(store) +
+      UploadModal(store)
+    );
+  }
+
+  global.Views = { Root };
+})(window);
+
+
+/* ===== app.js ===== */
+(function () {
+  "use strict";
+  const store = new Store();
+  const root = document.getElementById("app");
+
+  // ── action dispatch table ──────────────────────────────────────────
+  const H = {
+    noop() {},
+    stop() {},
+    preventFocusSteal(e) { e.preventDefault(); },
+
+    goToDashboard() { store.goToDashboard(); },
+    goToMeetingsNav() { store.goToMeetingsNav(); },
+    goToSettings() { store.goToSettings(); },
+    backToList() { store.backToList(); },
+    toggleSidebar() { store.toggleSidebar(); },
+    toggleTheme() { store.toggleTheme(); },
+    setTheme(e, v) { store.setTheme(v); },
+
+    setSort(e, key) { store.setSort(key); },
+    setQuery(e) { store.setQuery(e.target.value); },
+    setPlatformFilter(e, v) { store.setPlatformFilter(v); },
+    toggleDateCard() { store.toggleDateCard(); },
+    closeDateModal() { store.closeDateModal(); },
+    clearDateRange() { store.clearDateRange(); },
+    dateFromChange(e) { store.setDateFrom(e.target.value); },
+    dateToChange(e) { store.setDateTo(e.target.value); },
+
+    toggleSelect(e, key) { store.toggleSelect(key); },
+    closeSelect() { store.closeSelect(); },
+    selectSetting(e, key, value) { store.selectSetting(key, value); },
+    chooseTranscriptionModel(e, key, value) { store.setTranscriptionModel(value); },
+    chooseSummaryModel(e, key, value) { store.setSummaryModel(value); },
+    chooseUploadPlatform(e, key, value) { store.setUploadPlatform(value); },
+    pinSummaryLang(e, value) { store.pinSummaryLang(value); },
+    toggleSetting(e, key) { store.updateSetting(key, !store.state.settings[key]); },
+    settingsInput(e, key) { store.updateSetting(key, e.target.value); },
+    setSettingsSection(e, id) { store.setSettingsSection(id); },
+    toggleConnector(e, id) { store.toggleConnector(id); },
+
+    toggleExpand(e, id) { store.toggleExpand(id); },
+    toggleExpandStop(e, id) { e.stopPropagation(); store.toggleExpand(id); },
+    toggleExpandKey(e, id) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); store.toggleExpand(id); } },
+    openDetailModal(e, id) { store.openDetailModal(id); },
+    closeDetailModal() { store.closeDetailModal(); },
+    closeModal(e, id) { if (id === "upload") store.closeUploadModal(); else store.closeDetailModal(); },
+    modalMaskClick(e, id) { if (id === "upload") store.closeUploadModal(); else store.closeDetailModal(); },
+    setDetailTab(e, v) { store.setDetailTab(v); },
+    copySummary(e, id) {
+      const m = store.state.meetings.find((x) => x.id === id);
+      if (m) store.copySummary(m);
+    },
+
+    startLiveSession() { store.startLiveSession(); },
+    endLiveSession() { store.endLiveSession(); },
+    openUploadModal() { store.openUploadModal(); },
+    closeUploadModal() { store.closeUploadModal(); },
+    clearUploadFile() { store.clearUploadFile(); },
+    uploadTitleInput(e) { store.setUploadTitle(e.target.value); },
+    uploadCompanyInput(e) { store.setUploadCompany(e.target.value); },
+    submitUpload() { store.submitUpload(); },
+    uploadFilePicked(e) {
+      const f = e.target.files && e.target.files[0];
+      if (f) store.setUploadFile(f);
+    },
+
+    toggleActionItem(e, meetingId, itemId) { store.toggleActionItem(meetingId, itemId); },
+    startEdit(e, meetingId, itemId) { store.startEdit(meetingId, itemId); },
+    setEditDraft(e) { store.setEditDraft(e.target.value); },
+    saveEdit() { store.saveEdit(); },
+    editDraftKeydown(e) {
+      if (e.key === "Enter") { e.preventDefault(); store.saveEdit(); }
+      else if (e.key === "Escape") { e.preventDefault(); store.cancelEdit(); }
+    },
+    removeActionItem(e, meetingId, itemId) { store.removeActionItem(meetingId, itemId); },
+    setNewItemDraft(e) { store.setNewItemDraft(e.target.value); },
+    newItemKeydown(e, meetingId) {
+      if (e.key === "Enter") { e.preventDefault(); store.addActionItem(meetingId); }
+    },
+    addActionItem(e, meetingId) { store.addActionItem(meetingId); },
+
+    checkboxKey(e, actionId) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        const args = Array.prototype.slice.call(arguments, 2);
+        H[actionId] && H[actionId].apply(null, [e].concat(args));
+      }
+    },
+
+    commentsInput(e) {
+      const id = e.target.getAttribute("data-meeting-id");
+      store.setComments(id, e.target.innerHTML);
+    },
+    applyFormat(e, type) {
+      const block = e.target.closest(".comments-block");
+      if (!block) return;
+      const editor = block.querySelector("[contenteditable]");
+      if (!editor) return;
+      editor.focus();
+      const cmd = { bold: "bold", italic: "italic", bullet: "insertUnorderedList", numbered: "insertOrderedList" }[type];
+      try { document.execCommand(cmd, false, null); } catch (err) {}
+      store.setComments(editor.getAttribute("data-meeting-id"), editor.innerHTML);
+    },
+  };
+
+  // ── delegated event dispatch ────────────────────────────────────────
+  function dispatch(type) {
+    return function (e) {
+      const el = e.target.closest("[data-" + type + "]");
+      if (!el || !root.contains(el)) return;
+      const raw = el.getAttribute("data-" + type);
+      const parts = raw.split("|");
+      const name = parts.shift();
+      const fn = H[name];
+      if (fn) fn.apply(null, [e].concat(parts));
+    };
+  }
+
+  root.addEventListener("click", dispatch("click"));
+  root.addEventListener("input", dispatch("input"));
+  root.addEventListener("change", dispatch("change"));
+  root.addEventListener("keydown", dispatch("keydown"));
+  root.addEventListener("mousedown", dispatch("mousedown"));
+
+  root.addEventListener("dragover", function (e) {
+    if (e.target.closest(".dropzone")) { e.preventDefault(); e.target.closest(".dropzone").classList.add("drag"); }
+  });
+  root.addEventListener("dragleave", function (e) {
+    const dz = e.target.closest(".dropzone");
+    if (dz) dz.classList.remove("drag");
+  });
+  root.addEventListener("drop", function (e) {
+    const dz = e.target.closest(".dropzone");
+    if (!dz) return;
+    e.preventDefault();
+    dz.classList.remove("drag");
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) store.setUploadFile(f);
+  });
+
+  // Checkboxes/toggles are plain buttons/spans, not native inputs — clicking
+  // anywhere delegated above already covers them via data-click.
+
+  // ── comment editor hydration ────────────────────────────────────────
+  // Content is owned by the DOM once mounted (see dom.js), so we only ever
+  // seed it from state the first time a given node appears.
+  function hydrateEditors() {
+    root.querySelectorAll("[contenteditable][data-meeting-id]").forEach((el) => {
+      const id = el.getAttribute("data-meeting-id");
+      if (el.__hydratedFor === id) return;
+      const m = store.state.meetings.find((x) => x.id === id);
+      el.innerHTML = m ? m.comments || "" : "";
+      el.__hydratedFor = id;
+    });
+  }
+
+  // ── theme ────────────────────────────────────────────────────────────
+  function applyTheme() {
+    const t = store.state.theme === "dark" ? "dark" : "light";
+    if (document.documentElement.getAttribute("data-theme") !== t) {
+      document.documentElement.setAttribute("data-theme", t);
+      document.documentElement.style.colorScheme = t;
+    }
+  }
+
+  // ── render loop ──────────────────────────────────────────────────────
+  function render() {
+    const html = Views.Root(store);
+    DomMorph.morph(root, html);
+    hydrateEditors();
+    applyTheme();
+  }
+
+  store.onChange(render);
+  render();
+})();
+
+</script>
+</body>
+</html>
